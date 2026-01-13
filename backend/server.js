@@ -15,6 +15,11 @@ const app = express(); // ✅ Must come before app.use()
 app.use(express.json());
 app.use(cors());
 
+import authRoutes from "./routes/authRoutes.js";
+
+app.use("/api/auth", authRoutes);
+
+
 dotenv.config();
 
 // MongoDB connection
