@@ -1,5 +1,4 @@
 import Task from "../models/Task.js";
-
 /**
  * @desc    Create a new task
  * @route   POST /api/tasks
@@ -8,17 +7,13 @@ import Task from "../models/Task.js";
 export const createTask = async (req, res) => {
   try {
     if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can create tasks" });
+      return res
+        .status(403)
+        .json({ message: "Only customers can create tasks" });
     }
 
-    const {
-      title,
-      description,
-      price,
-      location,
-      urgency,
-      scheduledAt,
-    } = req.body;
+    const { title, description, price, location, urgency, scheduledAt } =
+      req.body;
 
     const task = await Task.create({
       title,
@@ -28,6 +23,7 @@ export const createTask = async (req, res) => {
       urgency,
       scheduledAt,
       customer: req.user.id,
+      city: req.user.city,
     });
 
     res.status(201).json(task);
@@ -43,8 +39,7 @@ export const createTask = async (req, res) => {
  */
 export const getTasks = async (req, res) => {
   try {
-    const query = { status: "open" };
-
+   const query = { status: "open", city: req.user.city }; // ✅ cleaner
     // Price filter
     if (req.query.minPrice || req.query.maxPrice) {
       query.price = {};
@@ -81,8 +76,7 @@ export const acceptTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
 
-    if (!task)
-      return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     if (task.status !== "open")
       return res.status(400).json({ message: "Task already assigned" });
@@ -99,8 +93,6 @@ export const acceptTask = async (req, res) => {
   }
 };
 
-
-
 /**
  * @desc    Get tasks created by logged-in customer
  * @route   GET /api/tasks/my
@@ -108,8 +100,9 @@ export const acceptTask = async (req, res) => {
  */
 export const getMyTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ customer: req.user._id })
-      .sort({ createdAt: -1 });
+    const tasks = await Task.find({ customer: req.user._id }).sort({
+      createdAt: -1,
+    });
 
     res.status(200).json(tasks);
   } catch (error) {
@@ -143,8 +136,7 @@ export const cancelTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
 
-    if (!task)
-      return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     if (task.customer.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Not authorized" });
@@ -168,11 +160,9 @@ export const cancelTask = async (req, res) => {
  */
 export const startTask = async (req, res) => {
   try {
-    
     const task = await Task.findById(req.params.id);
 
-    if (!task)
-      return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     if (!task.tasker)
       return res.status(400).json({ message: "Task not yet accepted" });
@@ -192,15 +182,13 @@ export const startTask = async (req, res) => {
   }
 };
 
-
 export const completeTaskByCustomer = async (req, res) => {
   try {
     const { rating, review } = req.body;
 
     const task = await Task.findById(req.params.id);
 
-    if (!task)
-      return res.status(404).json({ message: "Task not found" });
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
     // Only customer who created task
     if (task.customer.toString() !== req.user._id.toString())
@@ -227,14 +215,14 @@ export const completeTaskByCustomer = async (req, res) => {
   }
 };
 
-// tasker dashboard 
+// tasker dashboard
 export const taskerDashboard = async (req, res) => {
   try {
     const taskerId = req.user._id;
 
-     const open = await Task.countDocuments({
-      tasker : taskerId,
-      status : "open"
+    const open = await Task.countDocuments({
+      tasker: taskerId,
+      status: "open",
     });
 
     const totalAssigned = await Task.countDocuments({
@@ -251,16 +239,15 @@ export const taskerDashboard = async (req, res) => {
       tasker: taskerId,
       status: "completed",
     });
-     const cancelled = await  Task.countDocuments({
-      tasker : taskerId,
-      status : "cancelled"
-     });
-   
-    const sum = await Task.aggregate([
-      { $match: { tasker : taskerId, isPaid: true } },
-      { $group: { _id: null, total: { $sum: "$price" } } }
-    ]);
+    const cancelled = await Task.countDocuments({
+      tasker: taskerId,
+      status: "cancelled",
+    });
 
+    const sum = await Task.aggregate([
+      { $match: { tasker: taskerId, isPaid: true } },
+      { $group: { _id: null, total: { $sum: "$price" } } },
+    ]);
 
     res.json({
       open,
@@ -268,13 +255,12 @@ export const taskerDashboard = async (req, res) => {
       inProgress,
       completed,
       totalEarned: sum.length > 0 ? sum[0].total : 0,
-      cancelled
+      cancelled,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-   };
-
+};
 
 // customer dashboard
 export const customerDashboard = async (req, res) => {
@@ -307,7 +293,7 @@ export const customerDashboard = async (req, res) => {
     });
     const sum = await Task.aggregate([
       { $match: { customer: customerId, isPaid: true } },
-      { $group: { _id: null, total: { $sum: "$price" } } }
+      { $group: { _id: null, total: { $sum: "$price" } } },
     ]);
     res.json({
       open,

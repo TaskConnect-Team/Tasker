@@ -18,6 +18,11 @@ const taskSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
     location: {
       type: String,
@@ -32,7 +37,14 @@ const taskSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["open", "assigned","in-progress", "completed", "cancelled","paid"],
+      enum: [
+        "open",
+        "assigned",
+        "in-progress",
+        "completed",
+        "cancelled",
+        "paid",
+      ],
       default: "open",
     },
     rating: {
@@ -44,21 +56,21 @@ const taskSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-   isPaid: {
-     type: Boolean,
+    isPaid: {
+      type: Boolean,
       default: false,
     },
-     paidAt: Date,
+    paidAt: Date,
     finalPrice: Number,
 
     paymentIntentId: String,
-   paymentStatus: {
-    type: String,
-    enum: ["none", "pending", "paid", "failed"],
-     default: "none"
-   },
-     platformFee: Number,
-     taskerEarning: Number,
+    paymentStatus: {
+      type: String,
+      enum: ["none", "pending", "paid", "failed"],
+      default: "none",
+    },
+    platformFee: Number,
+    taskerEarning: Number,
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -77,7 +89,7 @@ const taskSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Task = mongoose.model("Task", taskSchema);
