@@ -1,4 +1,5 @@
 export const ROUTES = {
-  home: '/',
-  login: '/login',
+  dashboard: '/dashboard',
+  taskList: '/tasks',
+  postTask: '/tasks/new',
 }
