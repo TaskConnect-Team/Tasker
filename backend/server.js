@@ -20,12 +20,13 @@ import authRoutes from "./routes/authRoutes.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express(); // ✅ Must come before app.use()
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
 
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: frontendUrl, credentials: true }));
 
 app.use(
   "/api/stripe",

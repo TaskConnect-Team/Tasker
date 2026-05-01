@@ -1,53 +1,135 @@
-import React, { createContext, useContext, useState, useEffect, use } from 'react';
-// import axios from 'axios';
+import { createContext, useContext, useEffect, useState } from 'react';
+import api from '../services/httpClient';
 
 const AuthContext = createContext();
+
+const AUTH_STORAGE_KEY = 'tasker_auth_user';
+const LEGACY_TOKEN_KEY = 'token';
+
+const normalizeUser = (user) => {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user.id ?? user._id,
+    name: user.name ?? '',
+    role: user.role ?? 'customer',
+  };
+};
+
+const readCachedUser = () => {
+  try {
+    const rawUser = localStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!rawUser) {
+      return null;
+    }
+
+    return normalizeUser(JSON.parse(rawUser));
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const persistUser = (nextUser) => {
+    const safeUser = normalizeUser(nextUser);
 
-    const verifyUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
+    setUser(safeUser);
+
+    if (safeUser) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(safeUser));
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+  };
+
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+
+    } catch (error) {
+      if (error?.response?.status !== 401) {
+        throw error;
+      }
+    } finally {
+      persistUser(null);
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+    }
+  };
+
+  useEffect(() => {
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+
+    let mounted = true;
+
+    const syncUser = async () => {
+      try {
+        const { data } = await api.get('http://localhost:3000/api/auth/me');
+
+        if (!mounted) {
+          return;
+        }
+
+        persistUser(data.user);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        if (error?.response?.status === 401) {
+          persistUser(null);
+        } else {
+          persistUser(readCachedUser());
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    const initializeAuth = async () => {
+      if (!navigator.onLine) {
+        persistUser(readCachedUser());
         setLoading(false);
         return;
       }
 
-      try {
-        const res = await fetch("http://localhost:3000/api/auth/me", {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!res.ok) throw new Error("Failed to verify user");
-        const data = await res.json();
-
-        setUser(data.user || null);
-        console.log("user set to:", data.user);
-
-      } catch (err) {
-
-        console.log("error verifying user:", err);
-        localStorage.removeItem('token');
-        setUser(null); 
-        // Not logged in or session expired
-      } finally {
-        setLoading(false); // Authentication check is complete
-      }
+      await syncUser();
     };
 
+    const handleOnline = () => {
+      syncUser();
+    };
 
-    verifyUser();
+    const handleOffline = () => {
+      persistUser(readCachedUser());
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
 
   }, []); // Run only once on mount
 
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}>
+    <AuthContext.Provider value={{ user, setUser: persistUser, logout, loading, refreshUser: () => api.get('/auth/me').then(({ data }) => persistUser(data.user)).catch(() => null) }}>
       {/* Do not render children until check is done to avoid "flash" of login page */}
       {!loading ? children : <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         {/* Tailwind Spinner */}

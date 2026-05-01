@@ -1,13 +1,14 @@
-export const isCustomer = (req, res, next) => {
-  if (req.user.role !== "customer") {
-    return res.status(403).json({ message: "Customer access only" });
+export const authorizeRoles = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authorized" });
   }
+
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
   next();
 };
 
-export const isTasker = (req, res, next) => {
-  if (req.user.role !== "tasker") {
-    return res.status(403).json({ message: "Tasker access only" });
-  }
-  next();
-};
+export const isCustomer = authorizeRoles("customer");
+export const isTasker = authorizeRoles("tasker");

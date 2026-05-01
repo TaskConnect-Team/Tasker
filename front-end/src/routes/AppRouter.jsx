@@ -8,7 +8,19 @@ import NotFound from '../pages/NotFound/NotFound'
 import Login from '../pages/LogIn/LogIn'
 import Signup from '../pages/SignUp/SignUp'
 import { Toaster } from 'react-hot-toast'
-import ProtectedRoute from './PrivateRoute'
+import ProtectedRoute, { RoleRoute } from './PrivateRoute'
+import { getDashboardHome } from '../constants/routes'
+import { useAuth } from '../context/AuthContext'
+
+const DashboardRedirect = () => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Navigate to={getDashboardHome(user.role)} replace />;
+};
 
 
 
@@ -19,28 +31,24 @@ function AppRouter() {
       <Toaster position="top-center" />
       <Routes>
 
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<AppShell />}>
+            <Route index element={<DashboardRedirect />} />
 
-        {/* Tasker Only Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['tasker']} />}>
-          <Route element={<AppShell />} >
-            <Route path="/tasks" element={<TaskListPage />} />
-            {/* Add tasker-specific routes here */}
+            <Route element={<RoleRoute allowedRoles={['customer']} />}>
+              <Route path="customer" element={<CustomerDashboardPage />} />
+              <Route path="customer/tasks/new" element={<PostTaskPage />} />
+            </Route>
 
-            
-          </Route>
-        </Route>
-
-        {/* Customer Only Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
-
-          <Route element={<AppShell />} >
-            <Route path="/CustomerDashboard" element={<CustomerDashboardPage />} />
-            <Route path="/tasks/new" element={<PostTaskPage />} />
-            {/* Add customer-specific routes here */}
-
+            <Route element={<RoleRoute allowedRoles={['tasker']} />}>
+              <Route path="tasker" element={<TaskListPage />} />
+              <Route path="tasker/tasks" element={<TaskListPage />} />
+            </Route>
           </Route>
         </Route>
 
