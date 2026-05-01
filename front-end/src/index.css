@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* 
+@tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+
 :root {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5;

@@ -2,6 +2,7 @@ import React from 'react'
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import toast from 'react-hot-toast';
 
 export default function SignUp() {
     const [name, setName] = useState("");
@@ -36,15 +37,19 @@ export default function SignUp() {
                 redirect: "follow"
             };
 
-            fetch("http://localhost:3000/api/auth/register", requestOptions)
-                .then((response) => response.text())
-                .then((result) => console.log(result))
-                .catch((error) => console.error(error));
+            const res = await fetch("http://localhost:3000/api/auth/register", requestOptions);
+            const result = await res.json();
 
-
-            navigate("/login");
+            if (res.ok) {
+                toast.success("User registered successfully!");
+                navigate("/login");
+            } else {
+                console.error("Signup failed:", result.message);
+                toast.error(result.message || "Failed to register. Please try again.");
+            }
         } catch (error) {
             console.error("Error during signup:", error);
+            toast.error("Could not connect to the server.");
         }
     };
 

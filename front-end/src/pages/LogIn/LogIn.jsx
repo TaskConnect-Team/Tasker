@@ -7,20 +7,18 @@ import { toast } from 'react-hot-toast';
 export default function LogIn() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('token');
         if (token) {
-            setLoading(true);
-            toast.success("Welcome back!")
-            navigate("/dashboard");
-        } else {
-            setLoading(false);
+            // Optionally, you can verify the token with the backend here before navigating
+            navigate("/CustomerDashboard");
         }
+
     }, [navigate]);
 
 
@@ -53,12 +51,14 @@ export default function LogIn() {
 
             if (response.ok) {
 
-                // console.log(result);
-                toast.success("Login successful!");
+                console.log(result);
 
+                toast.success("Login successful!");
                 localStorage.setItem("token", result.token);
+                localStorage.setItem("user", JSON.stringify(result.user));
                 navigate("/dashboard");
-            } else {
+            }
+            else {
                 // Displays "Invalid credentials" from your backend
                 console.log("error :", result.message)
                 toast.error(result.message || "Login failed");
@@ -73,14 +73,37 @@ export default function LogIn() {
     }
 
 
-    const handleGoogleLogin = () => {
+    const handleGoogleLogin = async (e) => {
+        e.preventDefault();
+
         // 1. Google login logic here
-        navigate("/dashboard");
+        // navigate("/dashboard");
+
+
+
+        // // check api/auth/me endpoint to see if user is logged in
+        // console.log("api/auth/me ...")
+
+        // try {
+        //     const res = await fetch("http://localhost:3000/api/auth/me");
+        //     const data = await res.json();
+        //     console.log("response from api/auth/me : ", data);
+        //         if (data.user) {
+        //             toast.success("Already logged in!");
+        //         } else {
+        //             toast.error("Not logged in. Please log in first.");
+        //         }
+        // } catch (err) {
+        //     console.log("error from api/auth/me : ", err)
+        // }
+
+
     }
 
-    const handleGithubLogin = () => {
+    const handleGithubLogin = (e) => {
+        e.preventDefault();
         // 1. Github login logic here
-        navigate("/dashboard");
+        // navigate("/dashboard");
     }
 
     if (loading) {
