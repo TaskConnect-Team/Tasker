@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import api from '../services/httpClient';
+import api from '../api/axios';
 
 const AuthContext = createContext();
 
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
 
     const syncUser = async () => {
       try {
-        const { data } = await api.get('http://localhost:3000/api/auth/me');
+        const { data } = await api.get('/auth/me');
 
         if (!mounted) {
           return;

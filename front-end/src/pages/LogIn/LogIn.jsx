@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
-import api from '../../services/httpClient';
+import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { getDashboardHome } from '../../constants/routes';
 
@@ -34,13 +34,30 @@ export default function LogIn() {
       setUser(data.user);
       toast.success(data.message || 'Login successful!');
       navigate(getDashboardHome(data.user.role), { replace: true });
-    } catch (error) {
+    }
+    catch (error) {
+      console.log("login error :", error)
       const message = error?.response?.data?.message || 'Could not connect to the server.';
       toast.error(message);
+
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleGoogleLogin = async (e) => {
+    e.preventDefault();
+
+    // 1. Google login logic here
+    // navigate("/dashboard");
+  }
+
+  const handleGithubLogin = (e) => {
+    e.preventDefault();
+
+    // 1. Github login logic here
+    // navigate("/dashboard");
+  }
 
   if (authLoading) {
     return (
@@ -114,6 +131,7 @@ export default function LogIn() {
         <div className="flex flex-col gap-3">
           <button
             type="button"
+            onClick={handleGoogleLogin}
             className="flex items-center justify-center gap-3 px-6 py-3 text-gray-700 font-medium border border-gray-300 rounded-lg bg-white shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 active:scale-95"
           >
             <img
@@ -126,6 +144,7 @@ export default function LogIn() {
 
           <button
             type="button"
+            onClick={handleGithubLogin}
             className="flex items-center justify-center gap-3 px-6 py-3 text-gray-700 font-medium border border-gray-300 rounded-lg bg-white shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 active:scale-95"
           >
             <svg

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import api from '../../services/httpClient';
+
+import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { getDashboardHome } from '../../constants/routes';
 

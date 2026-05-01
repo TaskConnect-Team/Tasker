@@ -20,13 +20,36 @@ import authRoutes from "./routes/authRoutes.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express(); // ✅ Must come before app.use()
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const normalizeOrigin = (origin) => origin.replace(/\/+$/, '');
 
 
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
-app.use(cors({ origin: frontendUrl, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const normalizedOrigin = normalizeOrigin(origin);
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
+    credentials: true,
+  })
+);
+
+console.log('✅ CORS allowed origins:', allowedOrigins);
 
 app.use(
   "/api/stripe",
@@ -54,5 +77,7 @@ app.get("/", (req, res) => {
   res.send("Hello from Express Server");
 });
 
+
+
 // Server
-app.listen(PORT, () => console.log(`🚀 Server started on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server started on http://localhost:${PORT}`));
