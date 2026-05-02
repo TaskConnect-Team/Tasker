@@ -19,7 +19,7 @@ const createAuthToken = (userId, role) =>
 
 const getCookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: true,
   sameSite: "none",
   maxAge: AUTH_COOKIE_MAX_AGE,
   path: "/",
@@ -39,8 +39,9 @@ const sendAuthResponse = (res, user, statusCode, message) => {
 const clearAuthCookie = (res) => {
   res.clearCookie(AUTH_COOKIE_NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
+    expires: new Date(0),
     path: "/",
   });
 };
