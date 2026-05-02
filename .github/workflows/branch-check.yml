@@ -2,16 +2,24 @@ name: "Branch Merge Policy"
 on:
   pull_request:
     branches:
-      - main  # Only trigger when someone tries to merge into main
+      - main
+      - dev
 
 jobs:
   check-source-branch:
     runs-on: ubuntu-latest
-    # Only run the 'exit 1' logic if the target (base) is main
-    if: github.base_ref == 'main' 
     steps:
-      - name: Check if source is dev
-        if: github.head_ref != 'dev'
+      - name: Validate Merge into Main
+        if: github.base_ref == 'main' && github.head_ref != 'dev'
         run: |
           echo "ERROR: You can only merge into 'main' from the 'dev' branch."
           exit 1
+
+      - name: Validate Merge into Dev
+        if: github.base_ref == 'dev'
+        run: |
+          # Check if the source branch starts with feature/, debug/, or fix/
+          if [[ ! "${{ github.head_ref }}" =~ ^(feature/|debug/|fix/) ]]; then
+            echo "ERROR: You can only merge into 'dev' from feature/*, debug/*, or fix/* branches."
+            exit 1
+          fi
