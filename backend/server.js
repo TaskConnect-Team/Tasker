@@ -20,10 +20,17 @@ import authRoutes from "./routes/authRoutes.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express(); // ✅ Must come before app.use()
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
+const allowedOrigins = (allowedOriginsEnv || '')
   .split(',')
   .map((origin) => origin.trim().replace(/\/+$/, ''))
   .filter(Boolean);
+
+if (!allowedOrigins.length) {
+  throw new Error(
+    'Missing required ALLOWED_ORIGINS configuration. Set ALLOWED_ORIGINS to a comma-separated list of allowed browser origins.'
+  );
+}
 
 const normalizeOrigin = (origin) => origin.replace(/\/+$/, '');
 
