@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 const AUTH_COOKIE_NAME = "token";
-const AUTH_COOKIE_MAX_AGE = 24 * 60 * 60 * 1000;
+const AUTH_COOKIE_MAX_AGE = 2 * 60 * 60 * 1000;
 const ALLOWED_ROLES = new Set(["customer", "tasker"]);
 
 const buildSafeUser = (user) => ({
@@ -20,7 +20,7 @@ const createAuthToken = (userId, role) =>
 const getCookieOptions = () => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  sameSite: "none",
   maxAge: AUTH_COOKIE_MAX_AGE,
   path: "/",
 });
@@ -106,6 +106,7 @@ export const loginUser = async (req, res) => {
     }
 
     return sendAuthResponse(res, user, 200, "Login successful");
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

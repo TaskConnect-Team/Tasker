@@ -10,7 +10,7 @@ if (!configuredBaseURL) {
   );
 }
 
-console.log("baseURL :", baseURL)
+// console.log("baseURL :", baseURL)
 
 const api = axios.create({
   baseURL,

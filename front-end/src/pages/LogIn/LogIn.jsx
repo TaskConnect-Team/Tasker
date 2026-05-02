@@ -47,6 +47,7 @@ export default function LogIn() {
   const handleGoogleLogin = async (e) => {
     e.preventDefault();
 
+    toast.error('Google login is not implemented yet.');
     // 1. Google login logic here
     // navigate("/dashboard");
   }
@@ -54,6 +55,7 @@ export default function LogIn() {
   const handleGithubLogin = (e) => {
     e.preventDefault();
 
+    toast.error('GitHub login is not implemented yet.');
     // 1. Github login logic here
     // navigate("/dashboard");
   }
