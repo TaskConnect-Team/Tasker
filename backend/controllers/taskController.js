@@ -68,6 +68,63 @@ export const getTasks = async (req, res) => {
 };
 
 /**
+ * @desc    Search tasks for taskers
+ * @route   GET /api/tasks/search
+ * @access  Tasker
+ */
+export const searchTasks = async (req, res) => {
+  try {
+    const { q, status, location, minPrice, maxPrice, category } = req.query;
+    const query = {};
+
+    const terms = [q, category].filter(Boolean).join(" ").trim();
+    if (terms) {
+      const regex = new RegExp(terms, "i");
+      query.$or = [{ title: regex }, { description: regex }];
+    }
+
+    query.status = status || "open";
+
+    if (location) {
+      query.location = new RegExp(location, "i");
+    }
+
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    const tasks = await Task.find(query)
+      .populate("customer", "name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get task details
+ * @route   GET /api/tasks/:id
+ * @access  Authenticated
+ */
+export const getTaskById = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id).populate("customer", "name city");
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    return res.status(200).json(task);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * @desc    Accept a task
  * @route   PUT /api/tasks/:id/accept
  * @access  Tasker

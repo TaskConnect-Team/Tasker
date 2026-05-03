@@ -24,6 +24,9 @@ const ProtectedRoute = () => {
 export const RoleRoute = ({ allowedRoles = [] }) => {
   const { user, loading } = useAuth();
 
+  console.log("role is checked : ", user.role);
+
+
   if (loading) return <LoadingScreen />;
 
   if (!user) {
@@ -31,6 +34,7 @@ export const RoleRoute = ({ allowedRoles = [] }) => {
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+
     return <Navigate to={getDashboardHome(user.role)} replace />;
   }
 

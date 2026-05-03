@@ -52,7 +52,7 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
                 key={item.label}
                 type="button"
                 onClick={() => handleAction(item)}
-                className={`${linkBase} w-full text-left text-slate-600 hover:bg-slate-100`}
+                className={`${linkBase} w-full text-left text-slate-700 hover:bg-slate-100`}
               >
                 {item.label}
               </button>
@@ -80,7 +80,7 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
             <button
               type="button"
               onClick={onClose}
-              className="absolute inset-0 bg-slate-900/40"
+              className="absolute inset-0 bg-slate-300/40"
               aria-label="Close sidebar"
             />
             <motion.aside

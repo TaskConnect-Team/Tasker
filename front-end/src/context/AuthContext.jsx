@@ -16,6 +16,16 @@ const normalizeUser = (user) => {
     name: user.name ?? '',
     role: user.role ?? 'customer',
     profileImage: user.profileImage || "https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80",
+    tagline: user.tagline ?? '',
+    bio: user.bio ?? '',
+    location: user.location ?? user.city ?? '',
+    skills: Array.isArray(user.skills) ? user.skills : [],
+    services: Array.isArray(user.services) ? user.services : [],
+    availability: typeof user.availability === 'boolean' ? user.availability : true,
+    isVerified: typeof user.isVerified === 'boolean' ? user.isVerified : false,
+    hourlyRate: typeof user.hourlyRate === 'number' ? user.hourlyRate : null,
+    portfolio: Array.isArray(user.portfolio) ? user.portfolio : [],
+    trustScore: typeof user.trustScore === 'number' ? user.trustScore : 5.0,
   };
 };
 
@@ -64,6 +74,17 @@ export const AuthProvider = ({ children }) => {
       persistUser(null);
       localStorage.removeItem(LEGACY_TOKEN_KEY);
     }
+  };
+
+  const updateUser = (updates) => {
+    if (!updates) {
+      return;
+    }
+
+    persistUser({
+      ...user,
+      ...updates,
+    });
   };
 
   useEffect(() => {
@@ -130,7 +151,7 @@ export const AuthProvider = ({ children }) => {
 
 
   return (
-    <AuthContext.Provider value={{ user, setUser: persistUser, logout, loading, refreshUser: () => api.get('/auth/me').then(({ data }) => persistUser(data.user)).catch(() => null) }}>
+    <AuthContext.Provider value={{ user, setUser: persistUser, updateUser, logout, loading, refreshUser: () => api.get('/auth/me').then(({ data }) => persistUser(data.user)).catch(() => null) }}>
       {/* Do not render children until check is done to avoid "flash" of login page */}
       {!loading ? children : <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         {/* Tailwind Spinner */}

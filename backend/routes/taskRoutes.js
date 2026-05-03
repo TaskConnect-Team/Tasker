@@ -2,6 +2,8 @@ import express from "express";
 import {
   createTask,
   getTasks,
+   searchTasks,
+   getTaskById,
   acceptTask,
   getMyTasks,
   getAssignedTasks,
@@ -39,6 +41,9 @@ router.patch("/:id/cancel", protect, authorizeRoles("customer"), cancelTask);
 // Tasker views all open tasks (with filters)
 router.get("/", protect, authorizeRoles("tasker"), getTasks);
 
+// Tasker searches tasks
+router.get("/search", protect, authorizeRoles("tasker"), searchTasks);
+
 // Tasker views dashboard
 
 router.get("/dashboard/tasker", protect, authorizeRoles("tasker"), taskerDashboard);
@@ -54,5 +59,8 @@ router.patch("/:id/start", protect, authorizeRoles("tasker"), startTask);
 
 // Customer completes task + review
 router.patch("/:id/complete",protect,authorizeRoles("customer"),completeTaskByCustomer);
+
+// Task details
+router.get("/:id", protect, authorizeRoles("tasker", "customer"), getTaskById);
 
 export default router;

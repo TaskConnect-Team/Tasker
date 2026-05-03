@@ -11,6 +11,12 @@ const buildSafeUser = (user) => ({
   name: user.name,
   role: user.role,
   profileImage: user.profileImage || null,
+  tagline: user.tagline || "",
+  bio: user.bio || "",
+  location: user.location || user.city || "",
+  skills: user.skills || [],
+  services: user.services || [],
+  availability: user.availability ?? true,
 });
 
 const createAuthToken = (userId, role) =>
