@@ -54,7 +54,7 @@ function AppRouter() {
               <Route path="profile" element={<ProfilePage />} />
             </Route>
 
-            <Route element={<RoleRoute allowedRoles={['tasker']} />}>
+            <Route element={<RoleRoute allowedRoles={['tasker', 'customer']} />}>
               <Route path="map" element={<MapPage />} />
               <Route path="active-jobs" element={<ActiveJobsPage />} />
               <Route path="dashboard" element={<EarningsPage />} />

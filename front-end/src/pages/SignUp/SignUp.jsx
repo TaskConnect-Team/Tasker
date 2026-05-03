@@ -36,7 +36,7 @@ export default function SignUp() {
     }
 
     setSubmitting(true);
-
+    
     try {
       const { data } = await api.post('/auth/register', {
         name: name.trim(),

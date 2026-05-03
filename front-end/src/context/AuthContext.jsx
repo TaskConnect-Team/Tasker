@@ -15,6 +15,7 @@ const normalizeUser = (user) => {
     id: user.id ?? user._id,
     name: user.name ?? '',
     role: user.role ?? 'customer',
+    profileImage: user.profileImage || "https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80",
   };
 };
 
