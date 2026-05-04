@@ -55,19 +55,19 @@ function AppRouter() {
         <Route element={<ProtectedRoute />}>
           {/* protected routes that are only accessable for logged in user */}
 
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="messages" element={<MessagesPage />} />
           <Route path="browse-tasks" element={<BrowseTasksPage />} />
           <Route path="browse-taskers" element={<BrowseTaskersPage />} />
           <Route path="tasks/:taskId" element={<TaskDetailsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="privacy" element={<PrivacyPage />} />
 
           <Route path="/" element={<Layout />}>
             {/* pages that inside layout are protected by auth and accessable for both customer and tasker but some of them are role based accessable */}
 
             {/*  default home page || Index Route handles the role-based redirection for '/' */}
             <Route index element={<HomeByRole />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="privacy" element={<PrivacyPage />} />
 
             <Route element={<RoleRoute allowedRoles={['customer']} />}>
               {/* pages that only accessable for customer inside layout  */}
@@ -82,11 +82,8 @@ function AppRouter() {
               <Route path="map" element={<MapPage />} />
               <Route path="active-jobs" element={<ActiveJobsPage />} />
               <Route path="earnings" element={<EarningsPage />} />
+              
             </Route>
-
-
-
-
           </Route>
 
 
