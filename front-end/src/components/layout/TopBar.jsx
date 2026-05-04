@@ -9,7 +9,6 @@ function TopBar({ onOpenSidebar, onAvatarClick }) {
     const navigate = useNavigate();
     const { scrollY } = useScroll();
     const [hidden, setHidden] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
     const lastScrollY = useRef(0);
 
     useMotionValueEvent(scrollY, 'change', (latest) => {
@@ -30,18 +29,11 @@ function TopBar({ onOpenSidebar, onAvatarClick }) {
 
     const initials = user?.name ? user.name.charAt(0).toUpperCase() : 'TC';
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        const term = searchTerm.trim();
-        if (!term) {
-            return;
-        }
-
-        const encoded = encodeURIComponent(term);
+    const handleSearchTrigger = () => {
         if (user?.role === 'tasker') {
-            navigate(`/browse-tasks?q=${encoded}`);
+            navigate('/browse-tasks');
         } else {
-            navigate(`/browse-taskers?q=${encoded}`);
+            navigate('/browse-tasker');
         }
     };
 
@@ -62,22 +54,23 @@ function TopBar({ onOpenSidebar, onAvatarClick }) {
                     <Menu className="h-5 w-5" />
                 </button>
                 <div className="flex-1">
-                    <form onSubmit={handleSubmit} className="relative">
+                    <div className="relative">
                         <input
                             type="search"
-                            value={searchTerm}
-                            onChange={(event) => setSearchTerm(event.target.value)}
                             placeholder="Search tasks, gigs, or messages"
+                            onFocus={handleSearchTrigger}
+                            onClick={handleSearchTrigger}
                             className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 pr-11 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
                         />
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={handleSearchTrigger}
                             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-slate-500 hover:bg-slate-100"
                             aria-label="Search"
                         >
                             <Search className="h-4 w-4" />
                         </button>
-                    </form>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="hidden text-right text-xs text-slate-500 md:block">

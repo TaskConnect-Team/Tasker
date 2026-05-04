@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { MapPin, Star, Sparkles, ToggleLeft, ToggleRight, LogOut, Pencil } from 'lucide-react';
+import { MapPin, Star, Sparkles, ToggleLeft, ToggleRight, LogOut, Pencil, X, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -74,9 +74,23 @@ function UserProfileDrawer({ isOpen, onClose }) {
             transition={{ type: 'spring', stiffness: 240, damping: 26 }}
             className="absolute right-0 top-0 h-full w-full max-w-sm bg-white px-6 py-8 shadow-xl"
           >
-            <div
-              className="flex items-center gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-slate-300"
+
+            <button
+              onClick={onClose}
+              className="absolute top-2 right-4 p-2 rounded-full text-slate-400 hover:bg-slate-300  bg-slate-200 cursor-pointer transition-all duration-200 group"
+              aria-label="Close Drawer"
             >
+              <X
+                size={20}
+                className="text-black  hover:rotate-180 transition-all duration-500"
+              />
+            </button>
+
+
+            <div
+              className="flex items-center gap-4 rounded-2xl border mt-4 border-slate-200 p-4 transition hover:border-slate-300"
+            >
+
               <img
                 src={profileImage}
                 alt="Profile"
@@ -88,7 +102,7 @@ function UserProfileDrawer({ isOpen, onClose }) {
                 <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                   <MapPin className="h-4 w-4" />
                   <span>{user?.location || 'Remote'}</span>
-                  <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] uppercase text-white">
+                  <span className="rounded-full bg-indigo-500 px-2 py-0.5 text-[10px] uppercase text-white">
                     {user?.role ?? 'member'}
                   </span>
                 </div>
@@ -143,7 +157,7 @@ function UserProfileDrawer({ isOpen, onClose }) {
                     type="button"
                     onClick={toggleAvailability}
                     disabled={availabilityLoading}
-                    className={`flex items-center gap-2 rounded-full ${user?.availability ? 'bg-slate-900' : 'bg-slate-300'} px-3 py-2 text-xs font-semibold text-white disabled:opacity-60`}
+                    className={`flex items-center gap-2 rounded-full ${user?.availability ? 'bg-indigo-500' : 'bg-slate-300'} px-3 py-2 text-xs font-semibold text-white disabled:opacity-60`}
                   >
                     {user?.availability ? (
                       <ToggleRight className="h-4 w-4" />
@@ -167,7 +181,8 @@ function UserProfileDrawer({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-900 cursor-pointer px-4 py-3 text-sm font-semibold text-white"
+                // className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-900 cursor-pointer px-4 py-3 text-sm font-semibold text-white "
+                className=' flex w-full items-center justify-center  gap-2 rounded-lg bg-indigo-500 text-white font-semibold shadow-md hover:bg-indigo-600 hover:shadow-lg transform py-2 hover:-translate-y-0.5 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer'
               >
                 <LogOut className="h-4 w-4" />
                 Logout

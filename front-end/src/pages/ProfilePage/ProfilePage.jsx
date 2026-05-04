@@ -128,6 +128,7 @@ function ProfilePage() {
 
   const initialProfile = useMemo(
     () => ({
+      fullName: user?.name || '',
       profileImage: user?.profileImage || DEFAULT_IMAGE,
       tagline: user?.tagline || '',
       location: user?.location || '',
@@ -305,6 +306,16 @@ function ProfilePage() {
       >
         <div className="space-y-4">
           <label className="block text-sm font-medium text-slate-700">
+            Full Name
+            <input
+              name="fullName"
+              value={formState.fullName}
+              onChange={handleChange}
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              placeholder="John Doe"
+            />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
             Tagline
             <input
               name="tagline"
@@ -328,6 +339,7 @@ function ProfilePage() {
             type="button"
             onClick={() =>
               handleSave({
+                fullName: formState.fullName,
                 profileImage: formState.profileImage,
                 tagline: formState.tagline,
                 location: formState.location,

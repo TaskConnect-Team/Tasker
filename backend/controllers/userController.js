@@ -37,6 +37,7 @@ const normalizeList = (value) => {
 export const updateProfile = async (req, res) => {
   try {
     const updates = {};
+    const name = normalizeText(req.body.fullName);
     const tagline = normalizeText(req.body.tagline);
     const bio = normalizeText(req.body.bio);
     const location = normalizeText(req.body.location);
@@ -47,6 +48,7 @@ export const updateProfile = async (req, res) => {
     const hourlyRate = req.body.hourlyRate;
     const portfolio = normalizeList(req.body.portfolio);
 
+    if (name !== undefined) updates.name = name;
     if (tagline !== undefined) updates.tagline = tagline;
     if (bio !== undefined) updates.bio = bio;
     if (location !== undefined) updates.location = location;

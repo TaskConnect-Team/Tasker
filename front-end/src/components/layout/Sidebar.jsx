@@ -51,8 +51,10 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
               <button
                 key={item.label}
                 type="button"
-                onClick={() => handleAction(item)}
-                className={`${linkBase} w-full text-left text-slate-700 hover:bg-slate-100`}
+                onClick={() => {
+                  handleAction(item)
+                }}
+                className={`${linkBase} w-full text-left rounded bg-slate-400 text-black hover:bg-slate-100`}
               >
                 {item.label}
               </button>
@@ -99,13 +101,19 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
                     <button
                       key={item.label}
                       type="button"
-                      onClick={() => handleAction(item)}
-                      className={`${linkBase} w-full text-left text-slate-700 hover:bg-slate-100`}
+                      onClick={() => {
+                        onClose();
+                        handleAction(item);
+                      }}
+                      className={`${linkBase} w-full text-left rounded bg-slate-400 text-black hover:bg-slate-100`}
                     >
                       {item.label}
                     </button>
                   ) : (
                     <NavLink
+                      onClick={() => {
+                        onClose();
+                      }}
                       key={item.label}
                       to={item.to}
                       className={`${linkBase} text-slate-700 hover:bg-slate-100`}

@@ -12,18 +12,20 @@ export const createTask = async (req, res) => {
         .json({ message: "Only customers can create tasks" });
     }
 
-    const { title, description, price, location, urgency, scheduledAt } =
-      req.body;
+
+    const { title, description, price, city, location, urgency, scheduledAt } =
+    req.body;
+  
 
     const task = await Task.create({
       title,
       description,
       price,
+      city,
       location,
       urgency,
       scheduledAt,
       customer: req.user.id,
-      city: req.user.city,
     });
 
     res.status(201).json(task);

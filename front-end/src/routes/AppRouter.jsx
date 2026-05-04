@@ -56,7 +56,7 @@ function AppRouter() {
           {/* protected routes that are only accessable for logged in user */}
 
           <Route path="browse-tasks" element={<BrowseTasksPage />} />
-          <Route path="browse-taskers" element={<BrowseTaskersPage />} />
+          <Route path="browse-tasker" element={<BrowseTaskersPage />} />
           <Route path="tasks/:taskId" element={<TaskDetailsPage />} />
 
           <Route path="/" element={<Layout />}>
