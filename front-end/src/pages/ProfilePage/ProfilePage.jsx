@@ -1,14 +1,53 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Pencil, MapPin, Loader2, BadgeCheck, DollarSign } from 'lucide-react';
+import { Pencil, MapPin, Loader2, BadgeCheck, DollarSign, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { uploadToCloudinary } from '../../utils/cloudinary';
+import ImageOptionsModal from "../../models/ImageOptionsModal"
+
 
 const DEFAULT_IMAGE =
   'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
 
 function Modal({ title, open, onClose, children }) {
+
+
+  const { user, updateUser } = useAuth(); // Assuming your context provides these
+  const [showModal, setShowModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setShowModal(false);
+      setIsUploading(true);
+
+      // 1. Upload to Cloudinary
+      const uploadedUrl = await uploadToCloudinary(file);
+
+      // 2. Update Backend (MongoDB)
+      const { data } = await api.put('/users/profile', { profileImage: uploadedUrl });
+
+      // 3. Sync Frontend State & LocalStorage
+      const updatedUser = { ...user, profileImage: data.profileImage };
+      updateUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      toast.success("Profile picture updated!");
+    } catch (error) {
+      toast.error("Upload failed. Try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+
+
+
   return (
     <AnimatePresence>
       {open ? (
@@ -43,10 +82,49 @@ function Modal({ title, open, onClose, children }) {
   );
 }
 
+
+
+
+
+
 function ProfilePage() {
   const { user, updateUser } = useAuth();
   const [activeModal, setActiveModal] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const [showModal, setShowModal] = useState(false);
+  const [profModal, setProfModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setShowModal(false);
+      setProfModal(false);
+      setIsUploading(true);
+
+      // 1. Upload to Cloudinary
+      const uploadedUrl = await uploadToCloudinary(file);
+
+      // 2. Update Backend (MongoDB)
+      const { data } = await api.put('/users/profile', { profileImage: uploadedUrl });
+
+      // 3. Sync Frontend State & LocalStorage
+      const updatedUser = { ...user, profileImage: data.profileImage };
+      updateUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      toast.success("Profile picture updated!");
+    } catch (error) {
+      toast.error("Upload failed. Try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+
 
   const initialProfile = useMemo(
     () => ({
@@ -102,11 +180,48 @@ function ProfilePage() {
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img
-              src={user?.profileImage || DEFAULT_IMAGE}
-              alt="Profile"
-              className="h-20 w-20 rounded-full object-cover"
+
+
+            <div className="relative group cursor-pointer" onClick={() => setProfModal(true)}>
+              {/* Profile Image with Loading Spinner Overlay */}
+              <div className="relative h-24 w-24 rounded-full overflow-hidden border-1 border-primary">
+                {/* <img
+                  src={user?.profileImage || DEFAULT_IMAGE}
+                  alt="Profile"
+                  className={`h-full w-full object-cover transition-opacity ${isUploading ? 'opacity-30' : 'opacity-100'}`}
+                /> */}
+
+                <img
+                  src={user?.profileImage || DEFAULT_IMAGE}
+                  alt="Profile"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Camera className="text-white w-6 h-6" />
+                  <span className="text-[10px] text-white font-medium uppercase">Edit</span>
+                </div>
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <ImageOptionsModal
+              isOpen={profModal}
+              onClose={() => setProfModal(false)}
+              onUpload={handleFileChange}
+              imageUrl={user?.profileImage}
             />
+
+
+
+
+            {/* --------------------------------- */}
+
             <div>
               <p className="text-2xl font-semibold text-slate-900">{user?.name ?? 'TaskConnect'}</p>
               <p className="text-sm text-slate-500">{user?.tagline || 'Crafting trusted task matches'}</p>
@@ -166,9 +281,9 @@ function ProfilePage() {
               <p>
                 {(user?.role === 'tasker' ? user?.skills?.length : user?.services?.length)
                   ? [
-                      ...(user?.role === 'tasker' ? user?.skills : []),
-                      ...(user?.services || []),
-                    ].filter(Boolean).join(', ')
+                    ...(user?.role === 'tasker' ? user?.skills : []),
+                    ...(user?.services || []),
+                  ].filter(Boolean).join(', ')
                   : 'List what you offer so clients know what to expect.'}
               </p>
             </div>
@@ -189,16 +304,6 @@ function ProfilePage() {
         onClose={closeModal}
       >
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-slate-700">
-            Profile image URL
-            <input
-              name="profileImage"
-              value={formState.profileImage}
-              onChange={handleChange}
-              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              placeholder="https://..."
-            />
-          </label>
           <label className="block text-sm font-medium text-slate-700">
             Tagline
             <input

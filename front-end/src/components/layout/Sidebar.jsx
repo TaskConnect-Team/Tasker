@@ -45,7 +45,7 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
         <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
           More
         </div>
-        <nav className="space-y-2">
+        <nav className="space-y-2 pt-2">
           {moreItems.map((item) => (
             item.action ? (
               <button

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { MapPin, Star, Sparkles, ToggleLeft, ToggleRight, LogOut } from 'lucide-react';
+import { MapPin, Star, Sparkles, ToggleLeft, ToggleRight, LogOut, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -75,13 +75,7 @@ function UserProfileDrawer({ isOpen, onClose }) {
             className="absolute right-0 top-0 h-full w-full max-w-sm bg-white px-6 py-8 shadow-xl"
           >
             <div
-              role="button"
-              tabIndex={0}
-              onClick={handleNavigateProfile}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleNavigateProfile();
-              }}
-              className="flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-slate-300"
+              className="flex items-center gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-slate-300"
             >
               <img
                 src={profileImage}
@@ -99,6 +93,28 @@ function UserProfileDrawer({ isOpen, onClose }) {
                   </span>
                 </div>
               </div>
+
+              {/* <button
+              tabIndex={0}
+              onClick={handleNavigateProfile}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') handleNavigateProfile();
+              }}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300 rounded"
+            >
+              View Profile
+            </button> */}
+
+              <button
+                type="button"
+                onClick={handleNavigateProfile}
+                className="rounded-full border border-slate-200 p-2 text-slate-600 cursor-pointer"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+
+
+
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
@@ -151,7 +167,7 @@ function UserProfileDrawer({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-900 cursor-pointer px-4 py-3 text-sm font-semibold text-white"
               >
                 <LogOut className="h-4 w-4" />
                 Logout

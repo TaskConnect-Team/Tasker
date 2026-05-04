@@ -87,7 +87,7 @@ function TopBar({ onOpenSidebar, onAvatarClick }) {
                     <button
                         type="button"
                         onClick={onAvatarClick}
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold transition hover:bg-slate-800 cursor-pointer hover:scale-105 text-white"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold transition hover:scale-105 cursor-pointer text-white"
                         aria-label="Open profile drawer"
                     >
                         {user?.profileImage ? (
