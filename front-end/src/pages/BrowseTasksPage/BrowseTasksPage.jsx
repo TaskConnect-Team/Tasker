@@ -5,6 +5,7 @@ import { ArrowLeft, Filter, MapPin, Search, SlidersHorizontal, Tag, Wallet } fro
 import api from '../../api/axios';
 import BrowseTopBar from '../../components/layout/BrowseTopBar';
 import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
+import { SHARED_SKILLS } from '../../constants/skills';
 const SkeletonCard = ({ delay }) => (
   <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
     style={{ animationDelay: `${delay}ms`, animationFillMode: 'backwards' }}
@@ -17,7 +18,7 @@ const SkeletonCard = ({ delay }) => (
 );
 
 
-const FiltersPanel = ({ formState, handleChange, handleApply, handleClear, isMobile = false }) => (
+const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChange, handleApply, handleClear, isMobile = false }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className=' justify-between hidden lg:flex'>
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -65,7 +66,13 @@ const FiltersPanel = ({ formState, handleChange, handleApply, handleClear, isMob
             placeholder="Plumbing"
             className="w-full rounded-xl border border-slate-200 px-3 py-2"
           /> */}
-            
+          <AutoCompleteSelect
+            label=""
+            values={SHARED_SKILLS}
+            selectedValues={filterCategory}
+            onValueChange={setFilterCategory}
+            placeholder="e.g. Plumbing, Painting..."
+          />
         </div>
       </label>
       <label className="block">
@@ -116,6 +123,7 @@ function BrowseTasksPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterCategory, setFilterCategory] = useState([]);
   const searchInputRef = useRef(null);
 
   const filters = useMemo(
@@ -142,6 +150,12 @@ function BrowseTasksPage() {
 
   useEffect(() => {
     setFormState(filters);
+
+    if (filters.category) {
+      setFilterCategory(filters.category.split(','));
+    } else {
+      setFilterCategory([]);
+    }
   }, [filters]);
 
   useEffect(() => {
@@ -191,6 +205,9 @@ function BrowseTasksPage() {
       if (value) {
         params[key] = value;
       }
+      if (filterCategory.length) {
+        params.category = filterCategory.join(',');
+      }
     });
     setSearchParams(params);
     setIsFilterOpen(false);
@@ -199,6 +216,7 @@ function BrowseTasksPage() {
   const handleClear = () => {
     setFormState(defaultFilters);
     setIsFilterOpen(false);
+    setFilterCategory([]);
     setSearchParams({ status: 'open' });
   };
 
@@ -262,6 +280,8 @@ function BrowseTasksPage() {
             <FiltersPanel
               formState={formState}
               handleChange={handleChange}
+              filterCategory={filterCategory}
+              setFilterCategory={setFilterCategory}
               handleApply={handleApply}
               handleClear={handleClear}
             />
@@ -288,7 +308,7 @@ function BrowseTasksPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold text-slate-900">Filters</div>
-                 <button
+                <button
                   type="button"
                   onClick={handleClear}
                   className="text-xs   rounded-full bg-slate-200 px-2 py-1 hover:bg-slate-300 cursor-pointer"
