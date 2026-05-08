@@ -1,4 +1,5 @@
 import Task from "../models/Task.js";
+import User from "../models/User.js";
 /**
  * @desc    Create a new task
  * @route   POST /api/tasks
@@ -13,9 +14,10 @@ export const createTask = async (req, res) => {
     }
 
 
-    const { title, description, price, city, location, urgency, scheduledAt } =
-    req.body;
-  
+    const { title, description, price, city, location, category, urgency, scheduledAt } =
+      req.body;
+
+
 
     const task = await Task.create({
       title,
@@ -23,8 +25,10 @@ export const createTask = async (req, res) => {
       price,
       city,
       location,
+      category,
       urgency,
       scheduledAt,
+      category,
       customer: req.user.id,
     });
 
@@ -40,8 +44,10 @@ export const createTask = async (req, res) => {
  * @access  Tasker
  */
 export const getTasks = async (req, res) => {
+  console.log("getTaske by : ", req.user)
+
   try {
-   const query = { status: "open", city: req.user.city }; // ✅ cleaner
+    const query = { status: "open", city: req.user.city }; // ✅ cleaner
     // Price filter
     if (req.query.minPrice || req.query.maxPrice) {
       query.price = {};
@@ -153,6 +159,75 @@ export const acceptTask = async (req, res) => {
 };
 
 /**
+ * @desc    Update task status (tasker flow)
+ * @route   PATCH /api/tasks/:id/status
+ * @access  Tasker
+ */
+export const updateTaskStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const nextStatus = String(status || '').trim();
+
+    const allowedStatuses = ['assigned', 'in-progress', 'completed'];
+    if (!allowedStatuses.includes(nextStatus)) {
+      return res.status(400).json({ message: 'Invalid status update' });
+    }
+
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const taskerId = req.user._id.toString();
+    const currentTaskerId = task.tasker ? task.tasker.toString() : null;
+
+    if (nextStatus === 'assigned') {
+      if (task.status !== 'open') {
+        return res.status(400).json({ message: 'Task is not open' });
+      }
+
+      if (currentTaskerId && currentTaskerId !== taskerId) {
+        return res.status(403).json({ message: 'Task assigned to another tasker' });
+      }
+
+      task.tasker = req.user._id;
+      task.status = 'assigned';
+    }
+
+    if (nextStatus === 'in-progress') {
+      if (task.status !== 'assigned') {
+        return res.status(400).json({ message: 'Task is not assigned' });
+      }
+
+      if (currentTaskerId !== taskerId) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+
+      task.status = 'in-progress';
+    }
+
+    if (nextStatus === 'completed') {
+      if (task.status !== 'in-progress') {
+        return res.status(400).json({ message: 'Task is not in progress' });
+      }
+
+      if (currentTaskerId !== taskerId) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+
+      task.status = 'completed';
+    }
+
+    await task.save();
+
+    return res.status(200).json({ message: 'Task updated', task });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/**
  * @desc    Get tasks created by logged-in customer
  * @route   GET /api/tasks/my
  * @access  Customer
@@ -179,6 +254,23 @@ export const getAssignedTasks = async (req, res) => {
       tasker: req.user._id,
       status: "assigned",
     }).sort({ createdAt: -1 });
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get tasks assigned to logged-in tasker (all statuses)
+ * @route   GET /api/tasks/tasker
+ * @access  Tasker
+ */
+export const getTaskerTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ tasker: req.user._id })
+      .populate("customer", "name")
+      .sort({ updatedAt: -1 });
 
     res.status(200).json(tasks);
   } catch (error) {
@@ -364,5 +456,77 @@ export const customerDashboard = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Tasker marks a task as completed
+ * @route   PATCH /api/tasks/:id/finish
+ * @access  Tasker
+ */
+export const completeTaskByTasker = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    if (!task.tasker)
+      return res.status(400).json({ message: "Task not yet accepted" });
+
+    if (task.tasker.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Not authorized" });
+
+    if (task.status !== "in-progress")
+      return res.status(400).json({ message: "Task cannot be completed" });
+
+    task.status = "completed";
+    await task.save();
+
+    res.json({ message: "Task completed successfully", task });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get recommended tasks for tasker
+ * @route   GET /api/tasks/recommended
+ * @access  Tasker
+ */
+export const getRecommendedTasks = async (req, res) => {
+  try {
+    const tasker = await User.findById(req.user._id).select("skills city");
+
+    if (!tasker) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    const skills = Array.isArray(tasker.skills)
+    ? tasker.skills.map((skill) => String(skill).trim()).filter(Boolean)
+    : [];
+    console.log("requested user skills :" , skills)
+
+    if (!skills.length) {
+      return res.status(200).json([]);
+    }
+    const query = {
+      status: "open",
+      category: { $in: skills },
+    };
+
+    const tasks = await Task.find(query).sort({ createdAt: -1 });
+    const city = (tasker.city || "").toLowerCase();
+
+    console.log("Taskes featch from DB : ", tasks)
+
+    const sorted = tasks.sort((a, b) => {
+      const aMatch = (a.city || "").toLowerCase() === city ? 1 : 0;
+      const bMatch = (b.city || "").toLowerCase() === city ? 1 : 0;
+      return bMatch - aMatch;
+    });
+
+    return res.status(200).json(sorted);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };

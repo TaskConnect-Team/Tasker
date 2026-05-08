@@ -4,10 +4,12 @@ import Layout from '../components/layout/Layout'
 import CustomerDashboardPage from '../pages/CustomerDashboardPage/DashboardPage'
 import PostTaskPage from '../pages/PostTaskPage/PostTaskPage'
 import TaskListPage from '../pages/TaskListPage/TaskListPage'
+import TaskerFeed from '../pages/TaskerFeed/TaskerFeed'
 import BrowseTasksPage from '../pages/BrowseTasksPage/BrowseTasksPage'
 import BrowseTaskersPage from '../pages/BrowseTaskersPage/BrowseTaskersPage'
 import TaskDetailsPage from '../pages/TaskDetailsPage/TaskDetailsPage'
-import MessagesPage from '../pages/MessagesPage/MessagesPage'
+import OrdersPage from '../pages/OrdersPage/OrdersPage'
+import NotificationsPage from '../pages/NotificationsPage/NotificationsPage'
 import ProfilePage from '../pages/ProfilePage/ProfilePage'
 import PublicProfilePage from '../pages/ProfilePage/PublicProfilePage'
 import MapPage from '../pages/MapPage/MapPage'
@@ -30,7 +32,7 @@ const HomeByRole = () => {
   }
 
   if (user.role === 'tasker') {
-    return <TaskListPage />;
+    return <TaskerFeed />;
   }
 
   return <CustomerDashboardPage />;
@@ -64,8 +66,9 @@ function AppRouter() {
 
             {/*  default home page || Index Route handles the role-based redirection for '/' */}
             <Route index element={<HomeByRole />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="messages" element={<MessagesPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
 

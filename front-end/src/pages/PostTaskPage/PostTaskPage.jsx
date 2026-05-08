@@ -1,63 +1,28 @@
-// import Button from '../../components/ui/Button'
-// import SectionTitle from '../../components/common/SectionTitle'
-
-// function PostTaskPage() {
-//   return (
-//     <section className="max-w-2xl space-y-6">
-//       <SectionTitle title="Post Task" subtitle="Starter form for creating a new task." />
-//       <form className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-//         <div>
-//           <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="title">
-//             Task Title
-//           </label>
-//           <input
-//             id="title"
-//             type="text"
-//             placeholder="Build dashboard summary"
-//             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20"
-//           />
-//         </div>
-//         <div>
-//           <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="description">
-//             Description
-//           </label>
-//           <textarea
-//             id="description"
-//             rows="4"
-//             placeholder="Describe the task details..."
-//             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20"
-//           />
-//         </div>
-//         <Button type="submit">Save Task</Button>
-//       </form>
-//     </section>
-//   )
-// }
-
-// export default PostTaskPage
-
-
-
 
 import React, { use, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ClipboardList, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
-  AlertCircle, 
+import {
+  ClipboardList,
+  MapPin,
+  DollarSign,
+  Clock,
+  AlertCircle,
   Calendar,
   Send,
-  Building
+  Building,
+  Tag,
+  MapPinCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios'; // Your axios instance
+import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
+import { SHARED_SKILLS } from '../../constants/skills';
 
 const PostTaskPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  
+  const [requiredSkills, setRequiredSkills] = useState([]);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -82,11 +47,15 @@ const PostTaskPage = () => {
       const taskData = {
         ...formData,
         price: Number(formData.price),
+        category: requiredSkills
       };
+
+      console.log("submitting task with data : ", taskData)
 
       const response = await api.post('/tasks', taskData);
       toast.success('Task posted successfully!');
-      navigate(`/tasks/${response.data._id}`); 
+      console.log("task created : ", response)
+      navigate(`/tasks/${response.data._id}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to post task');
     } finally {
@@ -110,7 +79,7 @@ const PostTaskPage = () => {
               <ClipboardList className="h-5 w-5 text-primary" />
               Task Essence
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Task Title</label>
@@ -139,19 +108,40 @@ const PostTaskPage = () => {
             </div>
           </div>
 
+          {/* Section: Category Selection */}
+          <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+            <div className="mb-4 flex items-center gap-2 font-semibold text-slate-800">
+              <Tag className="h-5 w-5 text-primary" />
+              Task Category
+            </div>
+
+            <div>
+              <AutoCompleteSelect
+                label="Required Skills / Categories"
+                values={SHARED_SKILLS}
+                selectedValues={requiredSkills}
+                onValueChange={setRequiredSkills}
+                placeholder="e.g. Plumbing, Painting..."
+              />
+              <p className="mt-2 text-xs text-slate-500">
+                This helps us match your task with the right experts.
+              </p>
+            </div>
+          </div>
+
           {/* Section 2: Logistics */}
           <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
             <div className="mb-4 flex items-center gap-2 font-semibold text-slate-800">
-              <MapPin className="h-5 w-5 text-primary" />
+              <MapPinCheck className="h-5 w-5 text-primary" />
               Location & Timing
             </div>
-            
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-1">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">City</label>
                 <div className="relative">
-                   <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                   <input
+                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
                     required
                     name="city"
                     value={formData.city}
@@ -165,8 +155,8 @@ const PostTaskPage = () => {
               <div className="sm:col-span-1">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Schedule Date</label>
                 <div className="relative">
-                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                   <input
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
                     type="datetime-local"
                     name="scheduledAt"
                     value={formData.scheduledAt}
@@ -196,13 +186,13 @@ const PostTaskPage = () => {
               <DollarSign className="h-5 w-5 text-primary" />
               Budget & Priority
             </div>
-            
+
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Estimated Budget ($)</label>
                 <div className="relative">
-                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                   <input
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
                     required
                     type="number"
                     min="1"
@@ -220,14 +210,14 @@ const PostTaskPage = () => {
                 <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({...prev, urgency: 'normal'}))}
+                    onClick={() => setFormData(prev => ({ ...prev, urgency: 'normal' }))}
                     className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${formData.urgency === 'normal' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   >
                     Normal
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({...prev, urgency: 'urgent'}))}
+                    onClick={() => setFormData(prev => ({ ...prev, urgency: 'urgent' }))}
                     className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${formData.urgency === 'urgent' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-red-500'}`}
                   >
                     Urgent
@@ -238,22 +228,22 @@ const PostTaskPage = () => {
           </div>
 
           {/* Submit Button */}
-          <div 
-          className='flex justify-center items-center'>
+          <div
+            className='flex justify-center items-center'>
             <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`group relative flex bg-indigo-300 hover:bg-indigo-500 transition-all px-2 items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-lg font-bold text-white shadow-lg shadow-primary/20  hover:bg-primary/90 active:scale-[0.98] ${loading ? 'opacity-70 cursor-not-allowed' : ' cursor-pointer'}`}
-          >
-            {loading ? (
-              <div className="h-6 w-6 px-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            ) : (
-              <>
-                <Send className="h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                Post This Task
-              </>
-            )}
-          </button>
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`group relative flex bg-indigo-300 hover:bg-indigo-500 transition-all px-2 items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-lg font-bold text-white shadow-lg shadow-primary/20  hover:bg-primary/90 active:scale-[0.98] ${loading ? 'opacity-70 cursor-not-allowed' : ' cursor-pointer'}`}
+            >
+              {loading ? (
+                <div className="h-6 w-6 px-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              ) : (
+                <>
+                  <Send className="h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  Post This Task
+                </>
+              )}
+            </button>
           </div>
         </form>
       </div>
