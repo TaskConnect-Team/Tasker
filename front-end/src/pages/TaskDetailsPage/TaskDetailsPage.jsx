@@ -24,6 +24,9 @@ function TaskDetailsPage() {
   const fetchTask = async (isMountedRef) => {
     try {
       const { data } = await api.get(`/tasks/${taskId}`);
+
+      console.log('Fetched task data:', data);
+      
       if (isMountedRef.current) {
         setTask(data);
       }

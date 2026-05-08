@@ -49,7 +49,7 @@ const AutoCompleteSelect = ({
   }, []);
 
   return (
-    <div className="relative space-y-2" ref={containerRef}>
+    <div className="w-full relative space-y-2" ref={containerRef}>
       {label && (
         <label className="block text-sm font-medium text-slate-700">
           {label}
@@ -57,7 +57,7 @@ const AutoCompleteSelect = ({
       )}
       
       {/* Selection Area / Chips Container */}
-      <div className="flex flex-wrap gap-2 min-h-[48px] p-2 rounded-xl border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400 transition-all">
+      <div className=" flex flex-wrap gap-2 min-h-[48px] p-2 rounded-xl border border-slate-200 bg-white shadow-sm focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400 transition-all">
         {selectedValues.map(item => (
           <span 
             key={item} 
