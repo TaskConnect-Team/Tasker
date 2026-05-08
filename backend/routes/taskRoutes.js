@@ -3,15 +3,19 @@ import {
   createTask,
   getTasks,
    searchTasks,
+   getRecommendedTasks,
    getTaskById,
   acceptTask,
   getMyTasks,
   getAssignedTasks,
+   getTaskerTasks,
   startTask,
+   completeTaskByTasker,
   completeTaskByCustomer,
   cancelTask,
   taskerDashboard,
   customerDashboard,
+   updateTaskStatus,
 } from "../controllers/taskController.js";
 
 import protect from "../middleware/authMiddleware.js";
@@ -44,6 +48,9 @@ router.get("/", protect, authorizeRoles("tasker"), getTasks);
 // Tasker searches tasks
 router.get("/search", protect, authorizeRoles("tasker"), searchTasks);
 
+// Tasker recommended tasks
+router.get("/recommended", protect, authorizeRoles("tasker"), getRecommendedTasks);
+
 // Tasker views dashboard
 
 router.get("/dashboard/tasker", protect, authorizeRoles("tasker"), taskerDashboard);
@@ -51,11 +58,20 @@ router.get("/dashboard/tasker", protect, authorizeRoles("tasker"), taskerDashboa
 // Tasker views tasks assigned to them
 router.get("/assigned", protect, authorizeRoles("tasker"), getAssignedTasks);
 
+// Tasker views their own tasks
+router.get("/tasker", protect, authorizeRoles("tasker"), getTaskerTasks);
+
 // Tasker accepts a task
 router.patch("/:id/accept", protect, authorizeRoles("tasker"), acceptTask);
 
 // Tasker starts task
 router.patch("/:id/start", protect, authorizeRoles("tasker"), startTask);
+
+// Tasker completes task
+router.patch("/:id/finish", protect, authorizeRoles("tasker"), completeTaskByTasker);
+
+// Tasker updates status (accept/start/complete)
+router.patch("/:id/status", protect, authorizeRoles("tasker"), updateTaskStatus);
 
 // Customer completes task + review
 router.patch("/:id/complete",protect,authorizeRoles("customer"),completeTaskByCustomer);

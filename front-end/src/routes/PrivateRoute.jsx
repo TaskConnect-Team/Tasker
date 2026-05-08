@@ -24,7 +24,6 @@ const ProtectedRoute = () => {
 export const RoleRoute = ({ allowedRoles = [] }) => {
   const { user, loading } = useAuth();
 
-  console.log("role is checked : ", user.role);
 
 
   if (loading) return <LoadingScreen />;

@@ -32,18 +32,18 @@ function Layout() {
     if (role === 'tasker') {
       return [
         { label: 'Job Feed', to: ROUTES.home, icon: Briefcase },
+        { label: 'Orders', to: ROUTES.orders, icon: Inbox },
         { label: 'Map View', to: ROUTES.map, icon: MapPin },
-        { label: 'Current Work', to: ROUTES.activeJobs, icon: Activity },
-        { label: 'Inbox', to: ROUTES.messages, icon: Inbox },
+        { label: 'Notifications', to: ROUTES.notifications, icon: FileText },
         { label: 'Earning', to: ROUTES.earnings, icon: BarChart3 },
       ];
     }
 
     return [
       { label: 'Dashboard', to: ROUTES.home, icon: Compass },
-      { label: 'My Tasks', to: ROUTES.requests, icon: FileText },
+      { label: 'My Tasks', to: ROUTES.orders, icon: Inbox },
       { label: 'Post Task', to: ROUTES.postTask, icon: PlusCircle },
-      { label: 'Inbox', to: ROUTES.messages, icon: Inbox },
+      { label: 'Notifications', to: ROUTES.notifications, icon: FileText  },
       { label: 'Account', to: ROUTES.profile, icon: User },
     ];
   }, [role]);

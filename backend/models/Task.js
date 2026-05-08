@@ -35,6 +35,12 @@ const taskSchema = new mongoose.Schema(
       default: "normal",
     },
 
+    category: {
+      type: [String],
+      trim: true,
+      default: "",
+    },
+
     status: {
       type: String,
       enum: [
@@ -42,6 +48,7 @@ const taskSchema = new mongoose.Schema(
         "assigned",
         "in-progress",
         "completed",
+        "reviewed",
         "cancelled",
         "paid",
       ],
