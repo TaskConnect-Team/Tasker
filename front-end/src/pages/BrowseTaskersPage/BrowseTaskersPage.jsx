@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Filter, MapPin, SlidersHorizontal, Star } from 'lucide-react';
 import api from '../../api/axios';
 import BrowseTopBar from '../../components/layout/BrowseTopBar';
+import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
+import { SHARED_SKILLS } from '../../constants/skills';
 
 const SkeletonCard = ({ delay }) => (
   <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -15,6 +17,102 @@ const SkeletonCard = ({ delay }) => (
   </div>
 );
 
+
+
+
+const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, handleApply, handleClear, isMobile = false }) => (
+  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className=' justify-between hidden lg:flex'>
+      <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+        <Filter className="h-4 w-4" />
+        Filters
+      </div>
+      <button
+        type="button"
+        onClick={handleClear}
+        className="text-xs font-semibold text-slate-500 hover:text-slate-700 rounded-full bg-slate-200 p-2 cursor-pointer "
+      >
+        Reset Filters
+      </button>
+    </div>
+    <form onSubmit={handleApply} className="mt-4 space-y-4 text-sm">
+      <label className="block">
+        Skills
+        <div className="mt-2 flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-slate-400" />
+          <AutoCompleteSelect
+            label=""
+            values={SHARED_SKILLS}
+            selectedValues={filterSkills}
+            onValueChange={setFilterSkills}
+            placeholder="e.g. Plumbing, Painting..."
+          />
+        </div>
+
+      </label>
+      <label className="block">
+        Hourly Rate
+        <div className="mt-2 flex gap-2">
+          <input
+            name="minRate"
+            // value={formState.minRate}
+            value={formState.minRate}
+            onChange={handleChange}
+            placeholder="Min"
+            type="number"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+          />
+          <input
+            name="maxRate"
+            value={formState.maxRate}
+            onChange={handleChange}
+            placeholder="Max"
+            type="number"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+          />
+        </div>
+      </label>
+      <label className="block">
+        Rating
+        <div className="mt-2 flex items-center gap-2">
+          <Star className="h-4 w-4 text-slate-400" />
+          <input
+            name="minRating"
+            value={formState.minRating}
+            onChange={handleChange}
+            placeholder="4.5"
+            type="number"
+            step="0.1"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+          />
+        </div>
+      </label>
+      <label className="block">
+        City
+        <div className="mt-2 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-slate-400" />
+          <input
+            name="city"
+            value={formState.city}
+            onChange={handleChange}
+            placeholder="City"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+          />
+        </div>
+      </label>
+      <div>
+        <button
+          type="submit"
+          className="inline-flex hover:bg-indigo-700 cursor-pointer items-center justify-start gap-2 bg-indigo-500 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-black transition hover:bg-primary/90"
+        >
+          {/* <Wallet className="h-4 w-4" /> */}
+          Apply Filters
+        </button>
+      </div>
+    </form>
+  </div>
+);
+
 function BrowseTaskersPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,6 +120,8 @@ function BrowseTaskersPage() {
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const searchInputRef = useRef(null);
+  const [filterSkills, setFilterSkills] = useState([]);
+
 
   const filters = useMemo(
     () => ({
@@ -35,9 +135,10 @@ function BrowseTaskersPage() {
     [searchParams]
   );
 
+
   const [formState, setFormState] = useState(filters);
   const defaultFilters = {
-    q: '',
+    q: formState.q || '',
     skills: '',
     city: '',
     minRate: '',
@@ -47,6 +148,13 @@ function BrowseTaskersPage() {
 
   useEffect(() => {
     setFormState(filters);
+
+    if (filters.skills) {
+      setFilterSkills(filters.skills.split(','));
+    } else {
+      setFilterSkills([]);
+    }
+
   }, [filters]);
 
   useEffect(() => {
@@ -97,97 +205,21 @@ function BrowseTaskersPage() {
         params[key] = value;
       }
     });
+    if (filterSkills.length) {
+      params.skills = filterSkills.join(',');
+    }
     setSearchParams(params);
     setIsFilterOpen(false);
   };
 
   const handleClear = () => {
     setFormState(defaultFilters);
+    setFilterSkills([]);
     setIsFilterOpen(false);
     setSearchParams({});
   };
 
-  const FiltersPanel = () => (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-        <Filter className="h-4 w-4" />
-        Filters
-      </div>
-      <form onSubmit={handleApply} className="mt-4 space-y-4 text-sm">
-        <label className="block">
-          Skills
-          <div className="mt-2 flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-slate-400" />
-            <input
-              name="skills"
-              value={formState.skills}
-              onChange={handleChange}
-              placeholder="Cleaning, Delivery"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2"
-            />
-          </div>
-        </label>
-        <label className="block">
-          Hourly Rate
-          <div className="mt-2 flex gap-2">
-            <input
-              name="minRate"
-              value={formState.minRate}
-              onChange={handleChange}
-              placeholder="Min"
-              type="number"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2"
-            />
-            <input
-              name="maxRate"
-              value={formState.maxRate}
-              onChange={handleChange}
-              placeholder="Max"
-              type="number"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2"
-            />
-          </div>
-        </label>
-        <label className="block">
-          Rating
-          <div className="mt-2 flex items-center gap-2">
-            <Star className="h-4 w-4 text-slate-400" />
-            <input
-              name="minRating"
-              value={formState.minRating}
-              onChange={handleChange}
-              placeholder="4.5"
-              type="number"
-              step="0.1"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2"
-            />
-          </div>
-        </label>
-        <label className="block">
-          City
-          <div className="mt-2 flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-slate-400" />
-            <input
-              name="city"
-              value={formState.city}
-              onChange={handleChange}
-              placeholder="City"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2"
-            />
-          </div>
-        </label>
-         <div>
-        <button
-          type="submit"
-          className="inline-flex hover:bg-indigo-700 cursor-pointer items-center justify-start gap-2 bg-indigo-500 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-black transition hover:bg-primary/90"
-        >
-          {/* <Wallet className="h-4 w-4" /> */}
-          Apply Filters
-        </button>
-      </div>
-      </form>
-    </div>
-  );
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -201,7 +233,7 @@ function BrowseTaskersPage() {
           placeholder="Search for tasks..."
         />
 
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row px-4 pb-10 pt-12">
+        <div className="mt-4 flex flex-col gap-6 lg:flex-row px-4 pb-10 pt-12">
           <section className="flex-1 space-y-4">
             {loading ? (
               <div className="grid gap-4 md:grid-cols-2">
@@ -263,7 +295,14 @@ function BrowseTaskersPage() {
           </section>
 
           <aside className="hidden w-full max-w-sm lg:block">
-            <FiltersPanel />
+            <FiltersPanel
+              formState={formState}
+              handleChange={handleChange}
+              filterSkills={filterSkills}
+              setFilterSkills={setFilterSkills}
+              handleApply={handleApply}
+              handleClear={handleClear}
+            />
           </aside>
         </div>
       </div>
@@ -294,7 +333,6 @@ function BrowseTaskersPage() {
                 >
                   Reset Filters
                 </button>
-                
               </div>
               <div className="mt-4">
                 <FiltersPanel />

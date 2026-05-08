@@ -6,7 +6,9 @@ import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { uploadToCloudinary } from '../../utils/cloudinary';
 import ImageOptionsModal from "../../models/ImageOptionsModal"
-
+import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
+import { SHARED_SKILLS } from '../../constants/skills';
+import { SHARED_SERVICES } from '../../constants/services';
 
 const DEFAULT_IMAGE =
   'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
@@ -95,6 +97,9 @@ function ProfilePage() {
   const [showModal, setShowModal] = useState(false);
   const [profModal, setProfModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [userSkills, setUserSkills] = useState([]);
+  const [businessServices, setBusinessServices] = useState([]);
+
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -133,10 +138,10 @@ function ProfilePage() {
       tagline: user?.tagline || '',
       location: user?.location || '',
       bio: user?.bio || '',
-      skills: (user?.skills || []).join(', '),
-      services: (user?.services || []).join(', '),
+      skills: (userSkills || []).join(', '),
+      services: (businessServices || []).join(', '),
       hourlyRate: user?.hourlyRate ?? '',
-      portfolio: (user?.portfolio || []).join(', '),
+      portfolio: (user?.portfolio || ''),
     }),
     [user]
   );
@@ -280,10 +285,10 @@ function ProfilePage() {
                 </div>
               ) : null}
               <p>
-                {(user?.role === 'tasker' ? user?.skills?.length : user?.services?.length)
+                {(user?.role === 'tasker' ? businessServices?.length : businessServices?.length)
                   ? [
-                    ...(user?.role === 'tasker' ? user?.skills : []),
-                    ...(user?.services || []),
+                    ...(user?.role === 'tasker' ? userSkills : []),
+                    ...(businessServices || []),
                   ].filter(Boolean).join(', ')
                   : 'List what you offer so clients know what to expect.'}
               </p>
@@ -398,18 +403,16 @@ function ProfilePage() {
                   placeholder="25"
                 />
               </label>
+
+              <AutoCompleteSelect
+                label="Skills"
+                values={SHARED_SKILLS}
+                selectedValues={userSkills}
+                onValueChange={setUserSkills}
+                placeholder="e.g. Plumbing, Painting..."
+              />
               <label className="block text-sm font-medium text-slate-700">
-                Skills (comma separated)
-                <input
-                  name="skills"
-                  value={formState.skills}
-                  onChange={handleChange}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  placeholder="Electrical, Plumbing"
-                />
-              </label>
-              <label className="block text-sm font-medium text-slate-700">
-                Portfolio links (comma separated)
+                Portfolio link
                 <input
                   name="portfolio"
                   value={formState.portfolio}
@@ -420,24 +423,21 @@ function ProfilePage() {
               </label>
             </>
           ) : null}
-          <label className="block text-sm font-medium text-slate-700">
-            Services (comma separated)
-            <input
-              name="services"
-              value={formState.services}
-              onChange={handleChange}
-              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Cleaning, Delivery"
-            />
-          </label>
+          <AutoCompleteSelect
+            label="Select Offered Services"
+            values={SHARED_SERVICES}
+            selectedValues={businessServices}
+            onValueChange={setBusinessServices}
+            placeholder="e.g. Full Home Painting..."
+          />
           <button
             type="button"
             onClick={() =>
               handleSave({
                 hourlyRate: user?.role === 'tasker' ? Number(formState.hourlyRate) : undefined,
-                skills: user?.role === 'tasker' ? formState.skills : undefined,
+                skills: user?.role === 'tasker' ? userSkills : undefined,
                 portfolio: user?.role === 'tasker' ? formState.portfolio : undefined,
-                services: formState.services,
+                services: user?.role === 'customer' ? businessServices : undefined,
               })
             }
             className={primaryButtonClasses}

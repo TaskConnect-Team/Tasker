@@ -80,6 +80,7 @@ export const AuthProvider = ({ children }) => {
     if (!updates) {
       return;
     }
+    
 
     persistUser({
       ...user,

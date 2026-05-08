@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Filter, MapPin, Search, SlidersHorizontal, Tag, Wallet } from 'lucide-react';
 import api from '../../api/axios';
 import BrowseTopBar from '../../components/layout/BrowseTopBar';
+import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
 const SkeletonCard = ({ delay }) => (
   <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
     style={{ animationDelay: `${delay}ms`, animationFillMode: 'backwards' }}
@@ -57,13 +58,14 @@ const FiltersPanel = ({ formState, handleChange, handleApply, handleClear, isMob
         Category
         <div className="mt-2 flex items-center gap-2">
           <Tag className="h-4 w-4 text-slate-400" />
-          <input
+          {/* <input
             name="category"
             value={formState.category}
             onChange={handleChange}
             placeholder="Plumbing"
             className="w-full rounded-xl border border-slate-200 px-3 py-2"
-          />
+          /> */}
+            
         </div>
       </label>
       <label className="block">
@@ -213,7 +215,7 @@ function BrowseTasksPage() {
           placeholder="Search for tasks..."
         />
 
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row">
+        <div className="mt-[60px] flex flex-col gap-6 lg:flex-row">
           {/* 1. Task List */}
           <section className="flex-1 space-y-4">
             {loading ? (

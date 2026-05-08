@@ -13,7 +13,7 @@ const buildSafeUser = (user) => ({
   availability: user.availability ?? true,
   isVerified: user.isVerified ?? false,
   hourlyRate: user.hourlyRate ?? null,
-  portfolio: user.portfolio || [],
+  portfolio: user.portfolio || "",
   trustScore: user.trustScore ?? 5.0,
 });
 
@@ -92,9 +92,9 @@ export const getPublicProfile = async (req, res) => {
 
     const memberSince = user.createdAt
       ? new Date(user.createdAt).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-        })
+        year: "numeric",
+        month: "short",
+      })
       : "";
 
     return res.status(200).json({
@@ -109,7 +109,7 @@ export const getPublicProfile = async (req, res) => {
         skills: user.skills || [],
         services: user.services || [],
         hourlyRate: user.hourlyRate ?? null,
-        portfolio: user.portfolio || [],
+        portfolio: user.portfolio || "",
         trustScore: user.trustScore ?? 5.0,
         isVerified: user.isVerified ?? false,
         memberSince,
@@ -133,9 +133,9 @@ export const searchTaskers = async (req, res) => {
       const skillList = Array.isArray(skills)
         ? skills
         : String(skills)
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean);
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
 
       if (skillList.length) {
         query.skills = { $in: skillList };
