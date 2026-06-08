@@ -140,7 +140,7 @@ function BrowseTasksPage() {
 
   const [formState, setFormState] = useState(filters);
   const defaultFilters = {
-    q: '',
+    q: formState.q || '',
     minPrice: '',
     maxPrice: '',
     category: '',

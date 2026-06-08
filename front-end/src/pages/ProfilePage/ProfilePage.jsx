@@ -97,8 +97,7 @@ function ProfilePage() {
   const [showModal, setShowModal] = useState(false);
   const [profModal, setProfModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [userSkills, setUserSkills] = useState([]);
-  const [businessServices, setBusinessServices] = useState([]);
+
 
 
   const handleFileChange = async (e) => {
@@ -138,15 +137,19 @@ function ProfilePage() {
       tagline: user?.tagline || '',
       location: user?.location || '',
       bio: user?.bio || '',
-      skills: (userSkills || []).join(', '),
-      services: (businessServices || []).join(', '),
+      skills: (user?.skills || []),
+      services: (user?.services || []),
       hourlyRate: user?.hourlyRate ?? '',
-      portfolio: (user?.portfolio || ''),
+      portfolio: (user?.portfolio ? user?.portfolio : ''),
     }),
     [user]
   );
-
   const [formState, setFormState] = useState(initialProfile);
+
+  const [userSkills, setUserSkills] = useState(user?.skills || []);
+  const [businessServices, setBusinessServices] = useState(user?.services || []);
+
+  console.log("formState : ", formState)
 
   const openModal = (modalKey) => {
     setFormState(initialProfile);
@@ -437,7 +440,7 @@ function ProfilePage() {
                 hourlyRate: user?.role === 'tasker' ? Number(formState.hourlyRate) : undefined,
                 skills: user?.role === 'tasker' ? userSkills : undefined,
                 portfolio: user?.role === 'tasker' ? formState.portfolio : undefined,
-                services: user?.role === 'customer' ? businessServices : undefined,
+                services:  businessServices || undefined,
               })
             }
             className={primaryButtonClasses}

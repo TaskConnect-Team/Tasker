@@ -15,6 +15,7 @@ const buildSafeUser = (user) => ({
   bio: user.bio || "",
   location: user.location || user.city || "",
   skills: user.skills || [],
+  portfolio: user.portfolio || "",
   services: user.services || [],
   availability: user.availability ?? true,
 });
