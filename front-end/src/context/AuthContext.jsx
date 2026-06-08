@@ -24,7 +24,7 @@ const normalizeUser = (user) => {
     availability: typeof user.availability === 'boolean' ? user.availability : true,
     isVerified: typeof user.isVerified === 'boolean' ? user.isVerified : false,
     hourlyRate: typeof user.hourlyRate === 'number' ? user.hourlyRate : null,
-    portfolio: Array.isArray(user.portfolio) ? user.portfolio : [],
+    portfolio: typeof user.portfolio === 'string' ? user.portfolio : '',
     trustScore: typeof user.trustScore === 'number' ? user.trustScore : 5.0,
   };
 };
@@ -96,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     const syncUser = async () => {
       try {
         const { data } = await api.get('/auth/me');
+        console.log('Fetched user data from server:', data);
 
         if (!mounted) {
           return;
@@ -154,7 +155,9 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{ user, setUser: persistUser, updateUser, logout, loading, refreshUser: () => api.get('/auth/me').then(({ data }) => persistUser(data.user)).catch(() => null) }}>
       {/* Do not render children until check is done to avoid "flash" of login page */}
-      {!loading ? children : <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+      {!loading ? children :
+      
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         {/* Tailwind Spinner */}
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
         <p className="text-gray-600 font-medium animate-pulse">Checking your session...</p>

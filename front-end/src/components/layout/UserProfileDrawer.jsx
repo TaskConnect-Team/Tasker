@@ -12,8 +12,19 @@ function UserProfileDrawer({ isOpen, onClose }) {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [logouting, setLogouting] = useState(false);
 
-  const profileImage = user?.profileImage
+  const CLOUDINARY_TRANSFORMS = "f_auto,q_auto,w_128,h_128,c_fill,g_face";
+
+  const getOptimizedUrl = (url) => {
+    if (!url || !url.includes("cloudinary.com")) return url;
+    const updatedUrl = url.replace("/upload/", `/upload/${CLOUDINARY_TRANSFORMS}/`);
+
+    // console.log("url : ", url, "updated url :", updatedUrl)
+    return updatedUrl;
+  };
+
+  const profileImage = getOptimizedUrl(user?.profileImage)
     || 'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
+
 
   const stats = useMemo(
     () => [
@@ -93,12 +104,13 @@ function UserProfileDrawer({ isOpen, onClose }) {
             <div
               className="flex items-center gap-4 rounded-2xl border mt-4 border-slate-200 p-4 transition hover:border-slate-300"
             >
-
               <img
                 src={profileImage}
                 alt="Profile"
+                loading="lazy"
                 className="h-16 w-16 rounded-full object-cover"
               />
+
               <div className="flex-1">
                 <p className="text-lg font-semibold text-slate-900">{user?.name ?? 'TaskConnect'}</p>
                 <p className="text-sm text-slate-500">{user?.tagline || 'Crafting trusted task matches'}</p>
@@ -110,17 +122,6 @@ function UserProfileDrawer({ isOpen, onClose }) {
                   </span>
                 </div>
               </div>
-
-              {/* <button
-              tabIndex={0}
-              onClick={handleNavigateProfile}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleNavigateProfile();
-              }}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300 rounded"
-            >
-              View Profile
-            </button> */}
 
               <button
                 type="button"

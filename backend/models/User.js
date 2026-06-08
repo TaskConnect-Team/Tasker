@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     services: [{ type: String, trim: true }],
     isVerified: { type: Boolean, default: false },
     hourlyRate: { type: Number },
-    portfolio: [{ type: String, trim: true }],
+    portfolio: { type: String, trim: true },
     averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     trustScore: { type: Number, default: 5.0 },

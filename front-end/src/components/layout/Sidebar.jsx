@@ -20,7 +20,7 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
 
   return (
     <Fragment>
-      <aside className="hidden w-64 border-r border-slate-200 bg-white px-4 py-6 md:flex md:flex-col">
+      <aside className="hidden mt-4 w-64 border-r border-slate-200 bg-white px-4 py-6 md:flex md:flex-col">
         <div className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
           Main
         </div>
@@ -42,9 +42,7 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
           })}
         </nav>
         <div className="my-6 h-px bg-slate-200" />
-        <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-          More
-        </div>
+        
         <nav className="space-y-2 pt-2">
           {moreItems.map((item) => (
             item.action ? (
@@ -92,9 +90,7 @@ function Sidebar({ isOpen, onClose, mainItems, moreItems }) {
               transition={{ type: 'spring', stiffness: 260, damping: 28 }}
               className="relative h-full w-72 bg-white p-6"
             >
-              <div className="mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                More
-              </div>
+                 
               <nav className="space-y-2">
                 {moreItems.map((item) => (
                   item.action ? (

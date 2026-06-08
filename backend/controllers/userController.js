@@ -46,7 +46,7 @@ export const updateProfile = async (req, res) => {
     const services = normalizeList(req.body.services);
     const availability = req.body.availability;
     const hourlyRate = req.body.hourlyRate;
-    const portfolio = normalizeList(req.body.portfolio);
+    const portfolio = normalizeText(req.body.portfolio);
 
     if (name !== undefined) updates.name = name;
     if (tagline !== undefined) updates.tagline = tagline;
