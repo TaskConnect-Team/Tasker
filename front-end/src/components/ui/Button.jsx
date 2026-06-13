@@ -7,6 +7,7 @@ function Button({ children, type = 'button', variant = 'primary', className = ''
   return (
     <button
       type={type}
+      disabled={props.disabled}
       className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors ${variantStyles[variant] ?? variantStyles.primary} ${className}`}
       {...props}
     >

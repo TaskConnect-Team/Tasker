@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     bio: { type: String, default: "" },
     city: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
     locationLabel: { type: String, default: "" },
