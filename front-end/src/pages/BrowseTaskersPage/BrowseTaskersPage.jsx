@@ -168,6 +168,7 @@ function BrowseTaskersPage() {
       setLoading(true);
       try {
         const { data } = await api.get('/users/search-taskers', { params: filters });
+
         if (mounted) {
           setTaskers(data.taskers || []);
         }
@@ -335,7 +336,14 @@ function BrowseTaskersPage() {
                 </button>
               </div>
               <div className="mt-4">
-                <FiltersPanel />
+                <FiltersPanel
+                  formState={formState}
+                  handleChange={handleChange}
+                  filterSkills={filterSkills}
+                  setFilterSkills={setFilterSkills}
+                  handleApply={handleApply}
+                  handleClear={handleClear}
+                />
               </div>
             </motion.div>
           </>

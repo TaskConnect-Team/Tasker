@@ -10,10 +10,15 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+        type: 'classic',
+      },
 
       workbox: {
+        importScripts: ['/firebase-messaging-sw.js'],
         runtimeCaching: [
-           {
+          {
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
@@ -33,6 +38,7 @@ export default defineConfig({
         short_name: 'TaskConnect',
         description: 'Smart Task Marketplace',
         theme_color: '#ffffff',
+        gcm_sender_id: '103953800507',
         icons: [
           {
             src: '/icon-192.png',

@@ -9,47 +9,13 @@ import ImageOptionsModal from "../../models/ImageOptionsModal"
 import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
 import { SHARED_SKILLS } from '../../constants/skills';
 import { SHARED_SERVICES } from '../../constants/services';
+import SingleAutoCompleteSelect from '../../components/ui/SingleAutoCompleteSelect';
+import { PAKISTAN_CITIES } from '../../constants/cities';
 
 const DEFAULT_IMAGE =
   'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
 
 function Modal({ title, open, onClose, children }) {
-
-
-  const { user, updateUser } = useAuth(); // Assuming your context provides these
-  const [showModal, setShowModal] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      setShowModal(false);
-      setIsUploading(true);
-
-      // 1. Upload to Cloudinary
-      const uploadedUrl = await uploadToCloudinary(file);
-
-      // 2. Update Backend (MongoDB)
-      const { data } = await api.put('/users/profile', { profileImage: uploadedUrl });
-
-      // 3. Sync Frontend State & LocalStorage
-      const updatedUser = { ...user, profileImage: data.profileImage };
-      updateUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-
-      toast.success("Profile picture updated!");
-    } catch (error) {
-      toast.error("Upload failed. Try again.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-
-
-
   return (
     <AnimatePresence>
       {open ? (
@@ -94,11 +60,10 @@ function ProfilePage() {
   const [activeModal, setActiveModal] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const [showModal, setShowModal] = useState(false);
+  // const [showModal, setShowModal] = useState(false);
   const [profModal, setProfModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [userSkills, setUserSkills] = useState([]);
-  const [businessServices, setBusinessServices] = useState([]);
+
 
 
   const handleFileChange = async (e) => {
@@ -106,7 +71,7 @@ function ProfilePage() {
     if (!file) return;
 
     try {
-      setShowModal(false);
+      // setShowModal(false);
       setProfModal(false);
       setIsUploading(true);
 
@@ -123,7 +88,7 @@ function ProfilePage() {
 
       toast.success("Profile picture updated!");
     } catch (error) {
-      toast.error("Upload failed. Try again.");
+      toast.error(error.message || "Upload failed. Try again.");
     } finally {
       setIsUploading(false);
     }
@@ -138,15 +103,19 @@ function ProfilePage() {
       tagline: user?.tagline || '',
       location: user?.location || '',
       bio: user?.bio || '',
-      skills: (userSkills || []).join(', '),
-      services: (businessServices || []).join(', '),
+      skills: (user?.skills || []),
+      services: (user?.services || []),
       hourlyRate: user?.hourlyRate ?? '',
-      portfolio: (user?.portfolio || ''),
+      portfolio: (user?.portfolio ? user?.portfolio : ''),
     }),
     [user]
   );
-
   const [formState, setFormState] = useState(initialProfile);
+
+  const [userSkills, setUserSkills] = useState(user?.skills || []);
+  const [businessServices, setBusinessServices] = useState(user?.services || []);
+
+  // console.log("formState : ", formState)
 
   const openModal = (modalKey) => {
     setFormState(initialProfile);
@@ -191,12 +160,6 @@ function ProfilePage() {
             <div className="relative group cursor-pointer" onClick={() => setProfModal(true)}>
               {/* Profile Image with Loading Spinner Overlay */}
               <div className="relative h-24 w-24 rounded-full overflow-hidden border-1 border-primary">
-                {/* <img
-                  src={user?.profileImage || DEFAULT_IMAGE}
-                  alt="Profile"
-                  className={`h-full w-full object-cover transition-opacity ${isUploading ? 'opacity-30' : 'opacity-100'}`}
-                /> */}
-
                 <img
                   src={user?.profileImage || DEFAULT_IMAGE}
                   alt="Profile"
@@ -330,7 +293,7 @@ function ProfilePage() {
               placeholder="Reliable tasker in your neighborhood"
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          {/* <label className="block text-sm font-medium text-slate-700">
             Location
             <input
               name="location"
@@ -339,7 +302,14 @@ function ProfilePage() {
               className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
               placeholder="City, Country"
             />
-          </label>
+          </label> */}
+          <SingleAutoCompleteSelect 
+            label="Location"
+            values={PAKISTAN_CITIES}
+            selectedValue={formState.location}
+            onValueChange={(value) => setFormState((prev) => ({ ...prev, location: value }))}
+            placeholder="City, Country"
+          />
           <button
             type="button"
             onClick={() =>
@@ -437,7 +407,7 @@ function ProfilePage() {
                 hourlyRate: user?.role === 'tasker' ? Number(formState.hourlyRate) : undefined,
                 skills: user?.role === 'tasker' ? userSkills : undefined,
                 portfolio: user?.role === 'tasker' ? formState.portfolio : undefined,
-                services: user?.role === 'customer' ? businessServices : undefined,
+                services:  businessServices || undefined,
               })
             }
             className={primaryButtonClasses}

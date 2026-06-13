@@ -24,9 +24,21 @@ const taskSchema = new mongoose.Schema(
       trim: true,
     },
 
-    location: {
+    locationLabel: {
       type: String,
-      required: true,
+      default: "",
+    },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude] -> NOTE THE ORDER!
+        required: true,
+      },
     },
 
     urgency: {
@@ -98,6 +110,8 @@ const taskSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+taskSchema.index({ location: "2dsphere" });
 
 const Task = mongoose.model("Task", taskSchema);
 

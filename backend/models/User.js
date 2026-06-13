@@ -10,24 +10,36 @@ const userSchema = new mongoose.Schema(
     bio: { type: String, default: "" },
     city: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
-    location: { type: String, default: "" },
+    locationLabel: { type: String, default: "" },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude] -> NOTE THE ORDER!
+      },
+    },
     skills: [{ type: String, trim: true }],
     services: [{ type: String, trim: true }],
     isVerified: { type: Boolean, default: false },
     hourlyRate: { type: Number },
-    portfolio: [{ type: String, trim: true }],
+    portfolio: { type: String, trim: true },
     averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     trustScore: { type: Number, default: 5.0 },
     balance: { type: Number, default: 0 },
     role: { type: String, enum: ["customer", "tasker"], default: "customer" },
     availability: { type: Boolean, default: true },
+    fcmTokens: [{ type: String, trim: true }],
   },
   { timestamps: true },
 );
+
+userSchema.index({ location: "2dsphere" });
 
 const User = mongoose.model("User", userSchema);
 export default User;
