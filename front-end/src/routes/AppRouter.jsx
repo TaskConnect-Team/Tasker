@@ -81,6 +81,7 @@ function AppRouter() {
 
             <Route element={<RoleRoute allowedRoles={['customer']} />}>
               {/* pages that only accessable for customer inside layout  */}
+              <Route path="customer-dashboard" element={<CustomerDashboardPage />} />
               <Route path="customerDashboard" element={<CustomerDashboardPage />} />
               <Route path="requests" element={<TaskListPage />} />
               <Route path="post-task" element={<PostTaskPage />} />
@@ -89,6 +90,7 @@ function AppRouter() {
 
             <Route element={<RoleRoute allowedRoles={['tasker']} />}>
               {/* pages that only accessable for tasker inside layout  */}
+              <Route path="tasker-dashboard" element={<TaskerFeed />} />
               <Route path="map" element={<MapPage />} />
               <Route path="active-jobs" element={<ActiveJobsPage />} />
               <Route path="earnings" element={<EarningsPage />} />

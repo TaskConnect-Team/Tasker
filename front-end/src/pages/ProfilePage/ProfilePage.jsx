@@ -115,7 +115,7 @@ function ProfilePage() {
   const [userSkills, setUserSkills] = useState(user?.skills || []);
   const [businessServices, setBusinessServices] = useState(user?.services || []);
 
-  console.log("formState : ", formState)
+  // console.log("formState : ", formState)
 
   const openModal = (modalKey) => {
     setFormState(initialProfile);

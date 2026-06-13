@@ -2,7 +2,8 @@ export const ROUTES = {
   login: '/login',
   signup: '/signup',
   home: '/',
-  customerDashboard: '/customerDashboard',
+  customerDashboard: '/customer-dashboard',
+  taskerDashboard: '/tasker-dashboard',
   requests: '/requests',
   orders: '/orders',
   postTask: '/post-task',
@@ -16,5 +17,5 @@ export const ROUTES = {
 };
 
 export const getDashboardHome = (role) => (
-  ROUTES.home
+  role === 'tasker' ? ROUTES.taskerDashboard : ROUTES.customerDashboard
 );

@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import Button from '../../components/ui/Button';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { Map, APIProvider, Marker } from '@vis.gl/react-google-maps';
 
 function TaskDetailsPage() {
   const { taskId } = useParams();
@@ -20,13 +21,14 @@ function TaskDetailsPage() {
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   const fetchTask = async (isMountedRef) => {
     try {
       const { data } = await api.get(`/tasks/${taskId}`);
 
-      console.log('Fetched task data:', data);
-      
+      // console.log('Fetched task data:', data);
+
       if (isMountedRef.current) {
         setTask(data);
       }
@@ -94,6 +96,11 @@ function TaskDetailsPage() {
   const isUrgent = task?.urgency === 'urgent';
   const ratingValue = task?.customer?.trustScore ?? 4.8;
   const customerName = task?.customer?.name ?? 'Customer';
+  const coordinates = task?.geoLocation?.coordinates;
+  const mapCenter = coordinates
+    ? { lat: coordinates[1], lng: coordinates[0] } // Google Maps needs { lat, lng }
+    : null;
+;
 
   const showAccept = taskStatus === 'open' && user?.role === 'tasker';
   const showStart =
@@ -119,14 +126,6 @@ function TaskDetailsPage() {
     }
   };
 
-  const handleDirections = () => {
-    if (!task?.location) {
-      return;
-    }
-
-    const query = encodeURIComponent(task.location);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-  };
 
   if (loading) {
     return (
@@ -145,170 +144,219 @@ function TaskDetailsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 pb-24">
-      <motion.section
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className={`rounded-full px-4 py-1 text-xs font-semibold ${statusStyles}`}>
-              {statusLabel}
-            </span>
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              Back to tasks
-            </Button>
-          </div>
+    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      <div className="mx-auto w-full max-w-6xl space-y-6 pb-24">
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className={`rounded-full px-4 py-1 text-xs font-semibold ${statusStyles}`}>
+                {statusLabel}
+              </span>
+              <Button variant="secondary" onClick={() => navigate(-1)}>
+                Back to tasks
+              </Button>
+            </div>
 
-          <div>
-            <h1 className="text-3xl font-semibold text-slate-900">{task.title}</h1>
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-semibold">
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">
-                <DollarSign className="h-4 w-4" />
-                ${task.price}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
-                <Tag className="h-4 w-4" />
-                {categoryLabel}
-              </span>
-              <span
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 ${
-                  isUrgent
+            <div>
+              <h1 className="text-3xl font-semibold text-slate-900">{task.title}</h1>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-semibold">
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-emerald-700">
+                  <DollarSign className="h-4 w-4" />
+                  ${task.price}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+                  <Tag className="h-4 w-4" />
+                  {categoryLabel}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 ${isUrgent
                     ? 'bg-rose-100 text-rose-700'
                     : 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                <Clock className="h-4 w-4" />
-                {isUrgent ? 'Urgent' : 'Normal'}
-              </span>
+                    }`}
+                >
+                  <Clock className="h-4 w-4" />
+                  {isUrgent ? 'Urgent' : 'Normal'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.section>
+        </motion.section>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
-        <div className="space-y-6">
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-          >
-            <h2 className="text-lg font-semibold text-slate-900">About this Task</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              {task.description}
-            </p>
-          </motion.section>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
+          <div className="space-y-6">
+            <motion.section
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <h2 className="text-lg font-semibold text-slate-900">About this Task</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                {task.description}
+              </p>
+            </motion.section>
 
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Logistics</h2>
-                <div className="mt-4 space-y-3 text-sm text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{task.city || 'City not provided'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{task.location || 'Address not provided'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>{scheduledLabel}</span>
+            <motion.section
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Logistics</h2>
+                  <div className="mt-4 space-y-3 text-sm text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{task.city || 'City not provided'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{task.location || 'Address not provided'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{scheduledLabel}</span>
+                    </div>
                   </div>
                 </div>
+                <Button variant="secondary" onClick={() => setIsMapModalOpen(true)} disabled={!mapCenter}>
+                  Get Directions
+                </Button>
               </div>
-              <Button variant="secondary" onClick={handleDirections}>
-                Get Directions
-              </Button>
-            </div>
-          </motion.section>
+            </motion.section>
+          </div>
+
+          <div className="space-y-6">
+            <motion.section
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                  {task?.customer?.profileImage ? (
+                    <img
+                      src={task.customer.profileImage}
+                      alt={customerName}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-6 w-6" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{customerName}</p>
+                  <p className="text-xs text-slate-500">Customer rating {ratingValue.toFixed(1)}</p>
+                </div>
+              </div>
+            </motion.section>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                {task?.customer?.profileImage ? (
-                  <img
-                    src={task.customer.profileImage}
-                    alt={customerName}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="h-6 w-6" />
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{customerName}</p>
-                <p className="text-xs text-slate-500">Customer rating {ratingValue.toFixed(1)}</p>
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.2 }}
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:static lg:border lg:rounded-3xl lg:bg-white lg:shadow-sm"
+        >
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Task action</p>
+              <p className="text-xs text-slate-500">Update the current status when ready.</p>
             </div>
-          </motion.section>
-        </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {showAccept && (
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={() => handleStatusUpdate('assigned')}
+                  disabled={updating}
+                >
+                  Accept Task
+                </Button>
+              )}
+              {showStart && (
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={() => handleStatusUpdate('in-progress')}
+                  disabled={updating}
+                >
+                  Start Work
+                </Button>
+              )}
+              {showComplete && (
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={() => handleStatusUpdate('completed')}
+                  disabled={updating}
+                >
+                  Mark as Completed
+                </Button>
+              )}
+              {showFinished && (
+                <Button className="w-full sm:w-auto" disabled>
+                  Task Finished
+                </Button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+        {/* 4. The Modal Overlay */}
+        {isMapModalOpen && mapCenter && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+
+            {/* Modal Container */}
+            <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <h3 className="text-lg font-semibold text-slate-800">Task Location</h3>
+                <button
+                  onClick={() => setIsMapModalOpen(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  {/* Fallback to text 'X' if you don't have an icon library */}
+                  <span className="font-bold">✕</span>
+                </button>
+              </div>
+
+              {/* Map Container */}
+              <div className="w-full h-[60vh] min-h-[400px] bg-slate-50">
+                <Map
+                  defaultCenter={mapCenter}
+                  defaultZoom={15}
+                  mapId="TASK_DETAIL_MAP"
+                  gestureHandling="greedy" // Allows users to pan without holding Ctrl/Cmd
+                  disableDefaultUI={true}  // Keeps the UI clean
+                >
+                  {/* The Red Pin Marker */}
+                  <Marker position={mapCenter} />
+                </Map>
+              </div>
+
+              {/* Optional: Footer with actual directions link if they still want to drive there */}
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${mapCenter.lat},${mapCenter.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
+                >
+                  Get Driving Directions ↗
+                </a>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, delay: 0.2 }}
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:static lg:border lg:rounded-3xl lg:bg-white lg:shadow-sm"
-      >
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Task action</p>
-            <p className="text-xs text-slate-500">Update the current status when ready.</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {showAccept && (
-              <Button
-                className="w-full sm:w-auto"
-                onClick={() => handleStatusUpdate('assigned')}
-                disabled={updating}
-              >
-                Accept Task
-              </Button>
-            )}
-            {showStart && (
-              <Button
-                className="w-full sm:w-auto"
-                onClick={() => handleStatusUpdate('in-progress')}
-                disabled={updating}
-              >
-                Start Work
-              </Button>
-            )}
-            {showComplete && (
-              <Button
-                className="w-full sm:w-auto"
-                onClick={() => handleStatusUpdate('completed')}
-                disabled={updating}
-              >
-                Mark as Completed
-              </Button>
-            )}
-            {showFinished && (
-              <Button className="w-full sm:w-auto" disabled>
-                Task Finished
-              </Button>
-            )}
-          </div>
-        </div>
-      </motion.div>
-    </div>
+    </APIProvider>
   );
 }
 

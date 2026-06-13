@@ -1,25 +1,38 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { getDashboardHome } from '../../constants/routes';
+import OtpVerification from './OtpVerification';
 
 export default function SignUp() {
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('');
-  const [city, setCity] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'customer',
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [conPassword, setConPassword] = useState('');
-  const [showPassword2, setShowPassword2] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const navigate = useNavigate();
-  const { user, setUser, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  const isLengthValid = formData.password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(formData.password);
+  const hasNumber = /[0-9]/.test(formData.password);
+  const isPasswordValid = isLengthValid && hasUppercase && hasNumber;
+
+  const passwordRules = [
+    { label: 'More than 8 characters', isValid: isLengthValid },
+    { label: 'At least one uppercase letter', isValid: hasUppercase },
+    { label: 'At least one number', isValid: hasNumber },
+  ];
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -27,30 +40,41 @@ export default function SignUp() {
     }
   }, [authLoading, navigate, user]);
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
+  const updateField = (field) => (event) => {
+    if (field === 'password' && passwordError) {
+      setPasswordError('');
+    }
 
-    if (password !== conPassword) {
-      toast.error('Passwords do not match');
+    setFormData((current) => ({
+      ...current,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleSignup = async (event) => {
+    event.preventDefault();
+
+    if (!isPasswordValid) {
+      setPasswordError('Password does not meet the requirements.');
       return;
     }
 
     setSubmitting(true);
-    
-    try {
-      const { data } = await api.post('/auth/register', {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        role: role.toLowerCase(),
-        city: city.trim(),
-      });
 
-      setUser(data.user);
-      toast.success(data.message || 'User registered successfully!');
-      navigate(getDashboardHome(data.user.role), { replace: true });
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: formData.role,
+      };
+
+      const { data } = await api.post('/auth/signup', payload);
+
+      setOtpEmail(payload.email);
+      toast.success(data.message || 'Verification code sent to your email.');
     } catch (error) {
-      const message = error?.response?.data?.message || 'Could not connect to the server.';
+      const message = error?.response?.data?.message || 'Could not create your account.';
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -59,154 +83,145 @@ export default function SignUp() {
 
   if (authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-        <p className="text-gray-600 font-medium animate-pulse">Checking your session...</p>
+      <div className="flex h-screen flex-col items-center justify-center bg-gray-50">
+        <div className="mb-4 h-16 w-16 animate-spin rounded-full border-b-4 border-t-4 border-blue-600" />
+        <p className="font-medium text-gray-600 animate-pulse">Checking your session...</p>
       </div>
     );
   }
 
+  if (otpEmail) {
+    return (
+      <OtpVerification
+        email={otpEmail}
+        onBack={() => setOtpEmail('')}
+      />
+    );
+  }
+
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-40px)] bg-gradient-to-br from-indigo-100 via-purple-100 to-violet-200 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 my-6">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-extrabold text-indigo-600">Create Account</h1>
-          <p className="text-gray-500 mt-2">Join us today and get started 🚀</p>
+    <main className="flex min-h-[calc(100vh-40px)] items-center justify-center bg-slate-100 px-4 py-8">
+      <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-extrabold text-indigo-600">Create your account</h1>
+          <p className="text-gray-500 mt-2">Start with the essentials. Email verification next.</p>
         </div>
 
-        <form onSubmit={handleSignup} className="flex flex-col gap-4">
-          <label className="block text-gray-700 font-medium mb-1">Name</label>
-          <input
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 outline-none transition bg-gray-50"
-            type="text"
-            name="name"
-            id="name"
-            autoComplete="name"
-            placeholder="John Doe"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-
-          <label className="block text-gray-700 font-medium mb-1">Email</label>
-          <input
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 outline-none transition bg-gray-50"
-            type="email"
-            name="email"
-            id="email"
-            autoComplete="username"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <label htmlFor="role" className="block text-gray-700 font-medium mb-1">
-            Role
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            required
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 outline-none transition bg-gray-50 text-gray-700 appearance-none cursor-pointer"
-          >
-            <option value="" disabled>Select a role...</option>
-            <option value="Tasker">Tasker</option>
-            <option value="Customer">Customer</option>
-          </select>
-
-          <label className="block text-gray-700 font-medium mb-1">City</label>
-          <input
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 outline-none transition bg-gray-50"
-            type="text"
-            name="city"
-            id="city"
-            placeholder="Enter your city"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            required
-          />
-
-          <label className="block text-gray-700 font-medium mb-1">Password</label>
-
-          <div className="relative w-full max-w-sm">
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="mb-1 block text-sm font-medium text-slate-700">Name</label>
             <input
-              type={showPassword ? 'text' : 'password'}
-              className="w-full px-4 py-2 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 outline-none transition bg-gray-50"
-              placeholder="********"
-              name="password"
-              id="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              value={formData.name}
+              onChange={updateField('name')}
               required
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="Ayesha Khan"
             />
-
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-600 hover:text-indigo-500"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-            </button>
           </div>
 
-          <label className="block text-gray-700 font-medium mb-1">Confirm Password</label>
-
-          <div className="relative w-full max-w-sm">
+          <div>
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">Email</label>
             <input
-              type={showPassword2 ? 'text' : 'password'}
-              className="w-full px-4 py-2 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-400 outline-none transition bg-gray-50"
-              name="new-password"
-              id="password2"
-              autoComplete="new-password"
-              placeholder="********"
-              value={conPassword}
-              onChange={(e) => {
-                setConPassword(e.target.value);
-                e.target.setCustomValidity(e.target.value !== password ? 'Passwords do not match' : '');
-              }}
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="username"
+              value={formData.email}
+              onChange={updateField('email')}
               required
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="you@example.com"
             />
+          </div>
 
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-600 hover:text-indigo-500"
-              onClick={() => setShowPassword2(!showPassword2)}
-              aria-label={showPassword2 ? 'Hide password' : 'Show password'}
+          <div>
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                value={formData.password}
+                onChange={updateField('password')}
+                required
+                minLength={8}
+                aria-describedby="password-rules password-error"
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 pr-11 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Create a strong password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-500 hover:text-blue-600"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </button>
+            </div>
+            <ul id="password-rules" className="mt-3 space-y-1.5">
+              {passwordRules.map((rule) => (
+                <li
+                  key={rule.label}
+                  className={`flex items-center gap-2 text-sm ${
+                    rule.isValid ? 'text-emerald-700' : 'text-slate-500'
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
+                      rule.isValid
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {rule.isValid ? '✓' : '×'}
+                  </span>
+                  {rule.label}
+                </li>
+              ))}
+            </ul>
+            {passwordError && (
+              <p id="password-error" className="mt-2 text-sm font-medium text-red-600">
+                {passwordError}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="role" className="mb-1 block text-sm font-medium text-slate-700">Role</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={updateField('role')}
+              className="w-full cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              {showPassword2 ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-            </button>
+              <option value="customer">Customer</option>
+              <option value="tasker">Tasker</option>
+            </select>
           </div>
 
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full py-2 rounded-lg bg-indigo-500 text-white font-semibold shadow-md hover:bg-indigo-600 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70"
+            disabled={submitting || !isPasswordValid}
+            className="w-full rounded-md bg-blue-600 px-4 py-2.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {submitting ? 'Creating account...' : 'Sign Up'}
+            {submitting ? 'Sending code...' : 'Create account'}
           </button>
         </form>
 
-        <div className="flex items-center my-6">
-          <hr className="flex-grow border-gray-300" />
-          <span className="px-2 text-gray-500 text-sm">or</span>
-          <hr className="flex-grow border-gray-300" />
-        </div>
-
-        <p className="text-center text-gray-600 text-sm">
+        <p className="mt-6 text-center text-sm text-slate-600">
           Already have an account?{' '}
-          <Link
-            to="/login"
-            className="text-indigo-500 font-medium hover:text-indigo-700 transition"
-          >
-            Log In
+          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700">
+            Log in
           </Link>
         </p>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
