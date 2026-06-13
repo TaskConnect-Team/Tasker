@@ -14,6 +14,9 @@ if (!configuredBaseURL) {
 
 const api = axios.create({
   baseURL,
+  paramsSerializer: {
+    indexes: null
+  },
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

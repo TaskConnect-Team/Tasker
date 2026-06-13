@@ -14,9 +14,11 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 // const cors = require("cors");
 import cors from "cors";
 import connectDB from "./config/db.js";
+import {createSpatialIndex} from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 
 
@@ -58,7 +60,7 @@ app.use(
   })
 );
 
-console.log('✅ CORS allowed origins:', allowedOrigins);
+// console.log('✅ CORS allowed origins:', allowedOrigins);
 
 app.use(
   "/api/stripe",
@@ -68,6 +70,7 @@ app.use(
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/reviews", reviewRoutes);
@@ -76,6 +79,11 @@ app.use("/api/payments", paymentRoutes);
 
 // MongoDB connection
 connectDB();
+
+// Force Mongoose to build the index programmatically
+// createSpatialIndex();
+
+
 // const DB_URL = process.env.atlas_URL;
 
 // mongoose.connect(DB_URL)

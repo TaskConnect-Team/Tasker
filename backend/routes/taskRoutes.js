@@ -3,6 +3,7 @@ import {
   createTask,
   getTasks,
    searchTasks,
+   getMatchingNearbyTasks,
    getRecommendedTasks,
    getTaskById,
   acceptTask,
@@ -50,6 +51,9 @@ router.get("/search", protect, authorizeRoles("tasker"), searchTasks);
 
 // Tasker recommended tasks
 router.get("/recommended", protect, authorizeRoles("tasker"), getRecommendedTasks);
+
+// Tasker sees nearby matching tasks on the map
+router.get("/matching-nearby", protect, authorizeRoles("tasker"), getMatchingNearbyTasks);
 
 // Tasker views dashboard
 

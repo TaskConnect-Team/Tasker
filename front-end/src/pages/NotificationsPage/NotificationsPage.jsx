@@ -30,6 +30,7 @@ function NotificationsPage() {
         const { data } = await api.get(endpoint);
         setTasks(Array.isArray(data) ? data : []);
       } catch (error) {
+        console.log("error : ", error)
         setTasks([]);
       } finally {
         setLoading(false);
@@ -52,13 +53,7 @@ function NotificationsPage() {
 
   return (
     <section className="space-y-6">
-      <div>
         <h1 className="text-2xl font-semibold text-slate-900">Notifications</h1>
-        <p className="text-sm text-slate-600">
-          Recent updates from your tasks and orders.
-        </p>
-      </div>
-
       {loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
           Loading notifications...

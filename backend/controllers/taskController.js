@@ -1,5 +1,118 @@
 import Task from "../models/Task.js";
 import User from "../models/User.js";
+import {
+  notifyMatchingTaskersForTask,
+  notifyTaskCustomer,
+  notifyTasker,
+} from "../utils/notificationService.js";
+
+const queueNotification = (notificationPromise) => {
+  Promise.resolve(notificationPromise).catch((error) => {
+    console.error("Push notification failed:", error);
+  });
+};
+
+const parseCoordinate = (value) => {
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) ? coordinate : null;
+};
+
+const normalizeGeoPoint = (value) => {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  if (value.type === "Point" && Array.isArray(value.coordinates) && value.coordinates.length === 2) {
+    const [lng, lat] = value.coordinates.map(Number);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      return { type: "Point", coordinates: [lng, lat] };
+    }
+  }
+
+  const lat = parseCoordinate(value.lat ?? value.latitude);
+  const lng = parseCoordinate(value.lng ?? value.longitude);
+
+  if (lat !== null && lng !== null) {
+    return { type: "Point", coordinates: [lng, lat] };
+  }
+
+  return undefined;
+};
+
+const buildGeoPointFromBody = (body) => {
+  const geoFromLocation = normalizeGeoPoint(body.location);
+  if (geoFromLocation) {
+    return geoFromLocation;
+  }
+
+  const lat = parseCoordinate(body.lat ?? body.latitude ?? body.locationLat);
+  const lng = parseCoordinate(body.lng ?? body.longitude ?? body.locationLng);
+
+  if (lat !== null && lng !== null) {
+    return { type: "Point", coordinates: [lng, lat] };
+  }
+
+  return undefined;
+};
+
+const getLocationLabel = (task) => {
+  if (typeof task.locationLabel === "string" && task.locationLabel.trim()) {
+    return task.locationLabel.trim();
+  }
+
+  if (typeof task.location === "string" && task.location.trim()) {
+    return task.location.trim();
+  }
+
+  return task.city || "";
+};
+
+const serializeTask = (task) => {
+  const plainTask = typeof task.toObject === "function" ? task.toObject() : task;
+  const geoLocation = plainTask.location?.type === "Point" ? plainTask.location : null;
+  const locationLabel = getLocationLabel(plainTask);
+
+  return {
+    ...plainTask,
+    locationLabel,
+    location: locationLabel,
+    geoLocation,
+  };
+};
+
+const serializeTasks = (tasks) => tasks.map((task) => serializeTask(task));
+
+const normalizeQueryList = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const serializeMatchingTask = (task) => ({
+  ...serializeTask(task),
+  distanceKm:
+    typeof task.distance === "number" ? Number((task.distance / 1000).toFixed(2)) : null,
+});
+
+const buildPointFromCoordinates = (latValue, lngValue) => {
+  const lat = parseCoordinate(latValue);
+  const lng = parseCoordinate(lngValue);
+
+  if (lat === null || lng === null) {
+    return null;
+  }
+
+  return { type: "Point", coordinates: [lng, lat] };
+};
 /**
  * @desc    Create a new task
  * @route   POST /api/tasks
@@ -14,9 +127,12 @@ export const createTask = async (req, res) => {
     }
 
 
-    const { title, description, price, city, location, category, urgency, scheduledAt } =
-      req.body;
+    const { title, description, price, city, category, urgency, scheduledAt } = req.body;
+    const geoLocation = buildPointFromCoordinates(req.body.lat, req.body.lng);
 
+    if (!geoLocation) {
+      return res.status(400).json({ message: "lat and lng are required" });
+    }
 
 
     const task = await Task.create({
@@ -24,15 +140,16 @@ export const createTask = async (req, res) => {
       description,
       price,
       city,
-      location,
+      location: geoLocation,
       category,
       urgency,
       scheduledAt,
-      category,
       customer: req.user.id,
     });
 
-    res.status(201).json(task);
+    queueNotification(notifyMatchingTaskersForTask(task));
+
+    res.status(201).json(serializeTask(task));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -57,7 +174,7 @@ export const getTasks = async (req, res) => {
 
     // Location filter
     if (req.query.location) {
-      query.location = req.query.location;
+      query.locationLabel = new RegExp(req.query.location, "i");
     }
 
     // Urgency filter
@@ -69,7 +186,7 @@ export const getTasks = async (req, res) => {
       .populate("customer", "name email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(tasks);
+    res.status(200).json(serializeTasks(tasks));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -94,7 +211,7 @@ export const searchTasks = async (req, res) => {
     query.status = status || "open";
 
     if (location) {
-      query.location = new RegExp(location, "i");
+      query.locationLabel = new RegExp(location, "i");
     }
 
     if (minPrice || maxPrice) {
@@ -107,9 +224,61 @@ export const searchTasks = async (req, res) => {
       .populate("customer", "name")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(tasks);
+    res.status(200).json(serializeTasks(tasks));
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get nearby tasks that match a tasker's skill set
+ * @route   GET /api/tasks/matching-nearby
+ * @access  Tasker
+ */
+export const getMatchingNearbyTasks = async (req, res) => {
+  try {
+    const latitude = Number(req.query.latitude);
+    const longitude = Number(req.query.longitude);
+    const radius = Number(req.query.radius ?? 10);
+    console.log("matching req --- skills  : ",Array.isArray(req.query.taskerSkill) );
+    const taskerSkills = normalizeQueryList(req.query.taskerSkill);
+    console.log("matching req --- skills  : ",taskerSkills );
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return res.status(400).json({ message: "latitude and longitude are required" });
+    }
+
+    if (!Number.isFinite(radius) || radius <= 0) {
+      return res.status(400).json({ message: "radius must be a positive number" });
+    }
+
+    if (!taskerSkills.length) {
+      return res.status(400).json({ message: "taskerSkill is required" });
+    }
+
+    const tasks = await Task.aggregate([
+      {
+        $geoNear: {
+          near: { type: "Point", coordinates: [longitude, latitude] },
+          distanceField: "distance",
+          spherical: true,
+          maxDistance: radius * 1000,
+          query: {
+            status: { $in: ["Pending", "open"] },
+            category: { $in: taskerSkills },
+          },
+        },
+      },
+      {
+        $sort: { distance: 1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      tasks: tasks.map((task) => serializeMatchingTask(task)),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -126,7 +295,7 @@ export const getTaskById = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    return res.status(200).json(task);
+    return res.status(200).json(serializeTask(task));
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -152,7 +321,17 @@ export const acceptTask = async (req, res) => {
 
     await task.save();
 
-    res.json({ message: "Task accepted successfully", task });
+    queueNotification(
+      notifyTaskCustomer(
+        task,
+        "Task accepted",
+        `${req.user.name || "A tasker"} accepted your task.`,
+        "task.accepted",
+        { taskerId: req.user._id.toString() },
+      ),
+    );
+
+    res.json({ message: "Task accepted successfully", task: serializeTask(task) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -221,7 +400,43 @@ export const updateTaskStatus = async (req, res) => {
 
     await task.save();
 
-    return res.status(200).json({ message: 'Task updated', task });
+    if (nextStatus === 'assigned') {
+      queueNotification(
+        notifyTaskCustomer(
+          task,
+          "Task accepted",
+          `${req.user.name || "A tasker"} accepted your task.`,
+          "task.accepted",
+          { taskerId: req.user._id.toString() },
+        ),
+      );
+    }
+
+    if (nextStatus === 'in-progress') {
+      queueNotification(
+        notifyTaskCustomer(
+          task,
+          "Task started",
+          `${req.user.name || "Your tasker"} started working on your task.`,
+          "task.started",
+          { taskerId: req.user._id.toString() },
+        ),
+      );
+    }
+
+    if (nextStatus === 'completed') {
+      queueNotification(
+        notifyTaskCustomer(
+          task,
+          "Task marked complete",
+          `${req.user.name || "Your tasker"} marked your task as complete.`,
+          "task.completed_by_tasker",
+          { taskerId: req.user._id.toString() },
+        ),
+      );
+    }
+
+    return res.status(200).json({ message: 'Task updated', task: serializeTask(task) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -238,7 +453,7 @@ export const getMyTasks = async (req, res) => {
       createdAt: -1,
     });
 
-    res.status(200).json(tasks);
+    res.status(200).json(serializeTasks(tasks));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -255,7 +470,7 @@ export const getAssignedTasks = async (req, res) => {
       status: "assigned",
     }).sort({ createdAt: -1 });
 
-    res.status(200).json(tasks);
+    res.status(200).json(serializeTasks(tasks));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -298,7 +513,16 @@ export const cancelTask = async (req, res) => {
     task.status = "cancelled";
     await task.save();
 
-    res.json({ message: "Task cancelled successfully", task });
+    queueNotification(
+      notifyTasker(
+        task,
+        "Task cancelled",
+        `"${task.title}" was cancelled by the customer.`,
+        "task.cancelled",
+      ),
+    );
+
+    res.json({ message: "Task cancelled successfully", task: serializeTask(task) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -327,7 +551,17 @@ export const startTask = async (req, res) => {
     task.status = "in-progress";
     await task.save();
 
-    res.json({ message: "Task started successfully", task });
+    queueNotification(
+      notifyTaskCustomer(
+        task,
+        "Task started",
+        `${req.user.name || "Your tasker"} started working on your task.`,
+        "task.started",
+        { taskerId: req.user._id.toString() },
+      ),
+    );
+
+    res.json({ message: "Task started successfully", task: serializeTask(task) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -357,9 +591,19 @@ export const completeTaskByCustomer = async (req, res) => {
 
     await task.save();
 
+    queueNotification(
+      notifyTasker(
+        task,
+        "Task completed",
+        `"${task.title}" was confirmed complete by the customer.`,
+        "task.completed_by_customer",
+        { customerId: req.user._id.toString() },
+      ),
+    );
+
     res.json({
       message: "Task completed and reviewed successfully",
-      task,
+      task: serializeTask(task),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -482,7 +726,17 @@ export const completeTaskByTasker = async (req, res) => {
     task.status = "completed";
     await task.save();
 
-    res.json({ message: "Task completed successfully", task });
+    queueNotification(
+      notifyTaskCustomer(
+        task,
+        "Task marked complete",
+        `${req.user.name || "Your tasker"} marked your task as complete.`,
+        "task.completed_by_tasker",
+        { taskerId: req.user._id.toString() },
+      ),
+    );
+
+    res.json({ message: "Task completed successfully", task: serializeTask(task) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -525,7 +779,7 @@ export const getRecommendedTasks = async (req, res) => {
       return bMatch - aMatch;
     });
 
-    return res.status(200).json(sorted);
+    return res.status(200).json(serializeTasks(sorted));
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
