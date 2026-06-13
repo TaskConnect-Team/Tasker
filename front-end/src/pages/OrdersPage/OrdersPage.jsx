@@ -54,6 +54,7 @@ function OrdersPage() {
       const { data } = await api.get(endpoint);
       setTasks(Array.isArray(data) ? data : []);
     } catch (error) {
+      console.log("error : ", error)
       setTasks([]);
     } finally {
       setLoading(false);
@@ -128,13 +129,7 @@ function OrdersPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Orders</h1>
-        <p className="text-sm text-slate-600">
-          Track tasks by status and take quick actions.
-        </p>
-      </div>
-
+      <h1 className="text-2xl font-semibold text-slate-900">Orders</h1>
       <div className="flex flex-wrap gap-3">
         {dynamicTabs.map((tab) => {
           const Icon = tab.icon;

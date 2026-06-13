@@ -55,24 +55,19 @@ function TaskerFeed() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-        Loading recommended tasks...
-      </div>
-    );
-  }
-
-  if (!tasks.length) {
-    return (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-        No tasks found for your specific skills yet. Try updating your profile skills!
-      </div>
-    );
-  }
-
   return (
-    <section className="space-y-6">
+      <section className="space-y-6">
+      <h1 className="text-2xl font-semibold text-slate-900">Recommend Tasks</h1>
+
+      {loading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+          Loading recommended tasks...
+        </div>
+      ) :   !tasks.length ? ( <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+        No tasks found for your specific skills yet. Try updating your profile skills!
+      </div> 
+      ) : (
+<>
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Smart Feed</h1>
         <p className="text-sm text-slate-600">
@@ -84,7 +79,7 @@ function TaskerFeed() {
         {tasks.map((task) => {
           const category = task.category || 'General';
           const match = skills.includes(String(task.category || '').toLowerCase());
-
+          
           return (
             <div
               key={task._id}
@@ -128,6 +123,9 @@ function TaskerFeed() {
           );
         })}
       </div>
+      </>
+
+      )}
     </section>
   );
 }

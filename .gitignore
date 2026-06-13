@@ -5,6 +5,8 @@ frontend/node_modules/
 # Env files
 backend/.env
 frontend/.env
+backend/config/firebase-service-account.json
+backend/config/firebase-service-account*.json*
 
 # Logs
 *.log

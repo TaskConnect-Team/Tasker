@@ -23,9 +23,12 @@ import Signup from '../pages/SignUp/SignUp'
 import { Toaster } from 'react-hot-toast'
 import ProtectedRoute, { RoleRoute } from './PrivateRoute'
 import { useAuth } from '../context/AuthContext'
+import AdminRouter from '../admin/routes/AdminRouter'
+
 
 const HomeByRole = () => {
   const { user } = useAuth();
+  // const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -44,8 +47,12 @@ const HomeByRole = () => {
 function AppRouter() {
   return (
     <BrowserRouter>
+    
       <Toaster position="top-center" />
       <Routes>
+
+        {/* Admin routes */}
+        <Route path="/admin/*" element={<AdminRouter />} />
 
         {/* public route accessable for all user */}
         <Route path="/login" element={<Login />} />

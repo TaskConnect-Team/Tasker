@@ -13,7 +13,16 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    location: { type: String, default: "" },
+    locationLabel: { type: String, default: "" },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude] -> NOTE THE ORDER!
+      },
+    },
     skills: [{ type: String, trim: true }],
     services: [{ type: String, trim: true }],
     isVerified: { type: Boolean, default: false },
@@ -25,9 +34,12 @@ const userSchema = new mongoose.Schema(
     balance: { type: Number, default: 0 },
     role: { type: String, enum: ["customer", "tasker"], default: "customer" },
     availability: { type: Boolean, default: true },
+    fcmTokens: [{ type: String, trim: true }],
   },
   { timestamps: true },
 );
+
+userSchema.index({ location: "2dsphere" });
 
 const User = mongoose.model("User", userSchema);
 export default User;

@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, Upload, X } from 'lucide-react';
-import { useState } from 'react';
 const ImageOptionsModal = ({ isOpen, onClose, onUpload, imageUrl }) => {
   if (!isOpen) return null;
 

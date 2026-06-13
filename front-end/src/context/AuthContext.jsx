@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
+import { onForegroundMessage, removeCurrentFcmToken, requestNotificationPermission } from '../utils/fcm';
 
 const AuthContext = createContext();
 
@@ -18,7 +19,10 @@ const normalizeUser = (user) => {
     profileImage: user.profileImage || "https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80",
     tagline: user.tagline ?? '',
     bio: user.bio ?? '',
-    location: user.location ?? user.city ?? '',
+    location: user.location ?? user.locationLabel ?? user.city ?? '',
+    geoLocation: user.geoLocation && Array.isArray(user.geoLocation.coordinates)
+      ? user.geoLocation
+      : null,
     skills: Array.isArray(user.skills) ? user.skills : [],
     services: Array.isArray(user.services) ? user.services : [],
     availability: typeof user.availability === 'boolean' ? user.availability : true,
@@ -47,6 +51,7 @@ const readCachedUser = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const notificationRequestRef = useRef(false);
 
   const persistUser = (nextUser) => {
     const safeUser = normalizeUser(nextUser);
@@ -64,6 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      await removeCurrentFcmToken();
       await api.post('/auth/logout');
 
     } catch (error) {
@@ -77,6 +83,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (updates) => {
+
     if (!updates) {
       return;
     }
@@ -96,7 +103,7 @@ export const AuthProvider = ({ children }) => {
     const syncUser = async () => {
       try {
         const { data } = await api.get('/auth/me');
-        console.log('Fetched user data from server:', data);
+        // console.log('Fetched user data from server:', data);
 
         if (!mounted) {
           return;
@@ -150,6 +157,33 @@ export const AuthProvider = ({ children }) => {
     };
 
   }, []); // Run only once on mount
+
+  useEffect(() => {
+    if (!user?.id || !navigator.onLine) {
+      return;
+    }
+
+    if (notificationRequestRef.current) {
+      return;
+    }
+
+    notificationRequestRef.current = true;
+
+    requestNotificationPermission().catch((error) => {
+      notificationRequestRef.current = false;
+      console.warn("Unable to register push notifications:", error);
+    });
+  }, [user?.id]);
+
+  useEffect(() => {
+    const unsubscribe = onForegroundMessage();
+
+    return () => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
+  }, []);
 
 
   return (
