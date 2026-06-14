@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, ClipboardList, Clock, Hourglass, XCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import ReviewBottomSheet from '../../components/common/ReviewBottomSheet';
@@ -54,7 +55,7 @@ function OrdersPage() {
       const { data } = await api.get(endpoint);
       setTasks(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.log("error : ", error)
+      toast.error(error?.response?.data?.message || 'Failed to load tasks');
       setTasks([]);
     } finally {
       setLoading(false);
@@ -103,18 +104,30 @@ function OrdersPage() {
   };
 
   const handleCancel = async (taskId) => {
-    await api.patch(`/tasks/${taskId}/cancel`);
-    updateTaskStatus(taskId, 'cancelled');
+    try {
+      await api.patch(`/tasks/${taskId}/cancel`);
+      updateTaskStatus(taskId, 'cancelled');
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to cancel task');
+    }
   };
 
   const handleStart = async (taskId) => {
-    await api.patch(`/tasks/${taskId}/start`);
-    updateTaskStatus(taskId, 'in-progress');
+    try {
+      await api.patch(`/tasks/${taskId}/start`);
+      updateTaskStatus(taskId, 'in-progress');
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to start task');
+    }
   };
 
   const handleFinish = async (taskId) => {
-    await api.patch(`/tasks/${taskId}/finish`);
-    updateTaskStatus(taskId, 'completed');
+    try {
+      await api.patch(`/tasks/${taskId}/finish`);
+      updateTaskStatus(taskId, 'completed');
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to complete task');
+    }
   };
 
   const handleOpenReview = (task) => {

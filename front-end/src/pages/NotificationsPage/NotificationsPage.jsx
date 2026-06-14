@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bell } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -30,7 +31,7 @@ function NotificationsPage() {
         const { data } = await api.get(endpoint);
         setTasks(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.log("error : ", error)
+        toast.error(error?.response?.data?.message || 'Failed to load notifications');
         setTasks([]);
       } finally {
         setLoading(false);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from 'react-hot-toast';
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 
@@ -22,7 +23,7 @@ function EarningsPage() {
         console.log(data)
         setEarnings({});
       } catch (error) {
-        console.log("error : ", error)
+        toast.error(error?.response?.data?.message || 'Failed to load earnings');
         setEarnings(null);
       } finally {
         setLoading(false);

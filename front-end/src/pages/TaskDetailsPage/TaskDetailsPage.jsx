@@ -34,6 +34,7 @@ function TaskDetailsPage() {
       }
     } catch (error) {
       if (isMountedRef.current) {
+        toast.error(error?.response?.data?.message || 'Failed to load task details');
         setTask(null);
       }
     } finally {

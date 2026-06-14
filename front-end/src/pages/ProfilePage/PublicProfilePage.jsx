@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { BadgeCheck, MapPin, Mail, DollarSign } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -26,6 +27,7 @@ function PublicProfilePage() {
         }
       } catch (error) {
         if (mounted) {
+          toast.error(error?.response?.data?.message || 'Failed to load profile');
           setProfile(null);
         }
       } finally {
