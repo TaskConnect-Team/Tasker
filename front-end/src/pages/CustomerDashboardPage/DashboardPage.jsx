@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, ClipboardList, Clock, Hourglass, Wallet, XCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import api from '../../api/axios'
 import AnimatedNumber from '../../components/common/AnimatedNumber'
 import SectionTitle from '../../components/common/SectionTitle'
@@ -92,6 +93,7 @@ function DashboardPage() {
         }
       } catch (error) {
         if (isMounted) {
+          toast.error(error?.response?.data?.message || 'Failed to load dashboard')
           setStats({
             open: 0,
             assigned: 0,
