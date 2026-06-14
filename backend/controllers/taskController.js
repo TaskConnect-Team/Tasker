@@ -41,6 +41,7 @@ const serializeTask = (task) => {
 
 const serializeTasks = (tasks) => tasks.map((task) => serializeTask(task));
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 
 const serializeMatchingTask = (task) => ({
@@ -98,8 +99,6 @@ export const createTask = async (req, res) => {
  * @access  Tasker
  */
 export const getTasks = async (req, res) => {
-  console.log("getTaske by : ", req.user)
-
   try {
     const query = { status: "open", city: req.user.city }; // ✅ cleaner
     // Price filter
@@ -111,7 +110,7 @@ export const getTasks = async (req, res) => {
 
     // Location filter
     if (req.query.location) {
-      query.locationLabel = new RegExp(req.query.location, "i");
+      query.locationLabel = new RegExp(escapeRegex(req.query.location), "i");
     }
 
     // Urgency filter
@@ -141,14 +140,14 @@ export const searchTasks = async (req, res) => {
 
     const terms = [q, category].filter(Boolean).join(" ").trim();
     if (terms) {
-      const regex = new RegExp(terms, "i");
+      const regex = new RegExp(escapeRegex(terms), "i");
       query.$or = [{ title: regex }, { description: regex }];
     }
 
     query.status = status || "open";
 
     if (location) {
-      query.locationLabel = new RegExp(location, "i");
+      query.locationLabel = new RegExp(escapeRegex(location), "i");
     }
 
     if (minPrice || maxPrice) {
@@ -177,9 +176,7 @@ export const getMatchingNearbyTasks = async (req, res) => {
     const latitude = Number(req.query.latitude);
     const longitude = Number(req.query.longitude);
     const radius = Number(req.query.radius ?? 10);
-    console.log("matching req --- skills  : ",Array.isArray(req.query.taskerSkill) );
     const taskerSkills = normalizeList(req.query.taskerSkill);
-    console.log("matching req --- skills  : ",taskerSkills );
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return res.status(400).json({ message: "latitude and longitude are required" });
@@ -695,7 +692,7 @@ export const getRecommendedTasks = async (req, res) => {
     const skills = Array.isArray(tasker.skills)
     ? tasker.skills.map((skill) => String(skill).trim()).filter(Boolean)
     : [];
-    console.log("requested user skills :" , skills)
+
 
     if (!skills.length) {
       return res.status(200).json([]);
@@ -708,7 +705,7 @@ export const getRecommendedTasks = async (req, res) => {
     const tasks = await Task.find(query).sort({ createdAt: -1 });
     const city = (tasker.city || "").toLowerCase();
 
-    console.log("Taskes featch from DB : ", tasks)
+
 
     const sorted = tasks.sort((a, b) => {
       const aMatch = (a.city || "").toLowerCase() === city ? 1 : 0;
