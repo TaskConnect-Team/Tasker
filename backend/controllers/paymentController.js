@@ -47,6 +47,10 @@ export const makePayment = async (req, res) => {
 
     const tasker = await User.findById(task.tasker);
 
+    if (!tasker) {
+      return res.status(404).json({ message: "Tasker not found" });
+    }
+
     tasker.balance += taskerAmount;
     await tasker.save();
 

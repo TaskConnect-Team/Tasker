@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BadgeCheck, MapPin, Tag } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -29,6 +30,7 @@ function TaskerFeed() {
         }
       } catch (error) {
         if (mounted) {
+          toast.error(error?.response?.data?.message || 'Failed to load recommended tasks');
           setTasks([]);
         }
       } finally {
@@ -50,6 +52,8 @@ function TaskerFeed() {
     try {
       await api.patch(`/tasks/${taskId}/accept`);
       setTasks((prev) => prev.filter((task) => task._id !== taskId));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to accept task');
     } finally {
       setBusyId(null);
     }

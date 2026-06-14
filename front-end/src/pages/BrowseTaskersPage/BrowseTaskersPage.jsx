@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, MapPin, SlidersHorizontal, Star } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import BrowseTopBar from '../../components/layout/BrowseTopBar';
 import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
@@ -165,6 +166,7 @@ function BrowseTaskersPage() {
         }
       } catch (error) {
         if (mounted) {
+          toast.error(error?.response?.data?.message || 'Failed to load taskers');
           setTaskers([]);
         }
       } finally {
