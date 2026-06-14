@@ -56,7 +56,7 @@ export const getKPIs = async (req, res) => {
     });
   } catch (error) {
     console.error("KPI fetch error:", error);
-    res.status(500).json({ message: "Error fetching KPIs", error: error.message });
+    res.status(500).json({ message: "Error fetching KPIs" });
   }
 };
 
@@ -122,7 +122,7 @@ export const getChartsData = async (req, res) => {
     });
   } catch (error) {
     console.error("Charts data fetch error:", error);
-    res.status(500).json({ message: "Error fetching charts data", error: error.message });
+    res.status(500).json({ message: "Error fetching charts data" });
   }
 };
 
@@ -154,7 +154,7 @@ export const getHighRiskTaskers = async (req, res) => {
     });
   } catch (error) {
     console.error("High-risk taskers fetch error:", error);
-    res.status(500).json({ message: "Error fetching high-risk taskers", error: error.message });
+    res.status(500).json({ message: "Error fetching high-risk taskers" });
   }
 };
 
@@ -190,7 +190,7 @@ export const verifyTasker = async (req, res) => {
     });
   } catch (error) {
     console.error("Verify tasker error:", error);
-    res.status(500).json({ message: "Error verifying tasker", error: error.message });
+    res.status(500).json({ message: "Error verifying tasker" });
   }
 };
 
@@ -229,7 +229,7 @@ export const updateTrustScore = async (req, res) => {
     });
   } catch (error) {
     console.error("Update trust score error:", error);
-    res.status(500).json({ message: "Error updating trust score", error: error.message });
+    res.status(500).json({ message: "Error updating trust score" });
   }
 };
 
@@ -262,7 +262,7 @@ export const getUnverifiedTaskers = async (req, res) => {
     });
   } catch (error) {
     console.error("Unverified taskers fetch error:", error);
-    res.status(500).json({ message: "Error fetching unverified taskers", error: error.message });
+    res.status(500).json({ message: "Error fetching unverified taskers" });
   }
 };
 
@@ -296,7 +296,7 @@ export const getPayoutPipeline = async (req, res) => {
     });
   } catch (error) {
     console.error("Payout pipeline fetch error:", error);
-    res.status(500).json({ message: "Error fetching payout pipeline", error: error.message });
+    res.status(500).json({ message: "Error fetching payout pipeline" });
   }
 };
 
@@ -333,7 +333,7 @@ export const processPayout = async (req, res) => {
     });
   } catch (error) {
     console.error("Process payout error:", error);
-    res.status(500).json({ message: "Error processing payout", error: error.message });
+    res.status(500).json({ message: "Error processing payout" });
   }
 };
 
@@ -426,7 +426,7 @@ export const sendBlastNotification = async (req, res) => {
     });
   } catch (error) {
     console.error("Send blast notification error:", error);
-    res.status(500).json({ message: "Error sending notification", error: error.message });
+    res.status(500).json({ message: "Error sending notification" });
   }
 };
 
@@ -444,7 +444,8 @@ export const searchUsersAndTasks = async (req, res) => {
     }
 
     const searchQuery = q.trim();
-    const regex = new RegExp(searchQuery, "i");
+    const escaped = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escaped, "i");
 
     const [users, tasks] = await Promise.all([
       // Search users by email or name
@@ -488,7 +489,7 @@ export const searchUsersAndTasks = async (req, res) => {
     });
   } catch (error) {
     console.error("Search error:", error);
-    res.status(500).json({ message: "Error searching", error: error.message });
+    res.status(500).json({ message: "Error searching" });
   }
 };
 

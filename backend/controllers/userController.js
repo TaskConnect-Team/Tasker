@@ -61,6 +61,8 @@ const buildSafeUser = (user) => ({
   trustScore: user.trustScore ?? 5.0,
 });
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const normalizeText = (value) => (typeof value === "string" ? value.trim() : undefined);
 
 const normalizeList = (value) => {
@@ -101,12 +103,9 @@ export const updateProfile = async (req, res) => {
     if (profileImage !== undefined) updates.profileImage = profileImage;
     if (typeof availability === "boolean") updates.availability = availability;
 
-    console.log("updating data : ", name, tagline, bio, locationLabel, location, profileImage, skills, services, availability, hourlyRate, portfolio);
-
     if (req.user.role === "tasker") {
       if (typeof hourlyRate === "number") updates.hourlyRate = hourlyRate;
       if (skills !== undefined) updates.skills = skills;
-      console.log("elso body : updating services :", services)
       if (portfolio !== undefined) updates.portfolio = portfolio;
     } else {
       if (bio !== undefined) updates.bio = bio;
@@ -234,7 +233,7 @@ export const searchTaskers = async (req, res) => {
     const query = { role: "tasker" };
 
     if (q) {
-      query.name = new RegExp(q, "i");
+      query.name = new RegExp(escapeRegex(q), "i");
     }
 
     if (skills) {
@@ -252,8 +251,8 @@ export const searchTaskers = async (req, res) => {
 
     if (city) {
       query.$or = [
-        { city: new RegExp(city, "i") },
-        { locationLabel: new RegExp(city, "i") },
+        { city: new RegExp(escapeRegex(city), "i") },
+        { locationLabel: new RegExp(escapeRegex(city), "i") },
       ];
     }
 
