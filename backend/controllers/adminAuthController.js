@@ -20,7 +20,6 @@ const getCookieOptions = () => ({
  * Returns JWT token on success
  */
 export const adminLogin = async (req, res) => {
-    console.log("admin login  call ....")
     try {
         const { email, password } = req.body;
 
@@ -33,8 +32,6 @@ export const adminLogin = async (req, res) => {
         const adminEmail = process.env.ADMIN_EMAIL;
         const adminPasswordHash = process.env.ADMIN_PASSWORD; // Store as bcrypt hash in env
 
-        console.log("email for .evn file : ", adminEmail, "and password :", adminPasswordHash);
-
         if (!adminEmail || !adminPasswordHash) {
             return res.status(500).json({ message: "Admin credentials not configured" });
         }
@@ -45,9 +42,7 @@ export const adminLogin = async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        // Check password
-        // const isPasswordValid = await bcrypt.compare(password, adminPasswordHash);
-        const isPasswordValid = password === adminPasswordHash;
+        const isPasswordValid = await bcrypt.compare(password, adminPasswordHash);
 
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid email or password" });
