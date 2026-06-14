@@ -1,22 +1,8 @@
 import User from "../models/User.js";
 import { sendPushNotification } from "./pushNotification.js";
+import { normalizeList } from "./normalize.js";
 
 const DEFAULT_TASK_RADIUS_KM = Number(process.env.TASK_NOTIFICATION_RADIUS_KM || 20);
-
-const normalizeList = (value) => {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-};
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

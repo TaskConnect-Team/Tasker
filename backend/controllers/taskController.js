@@ -5,54 +5,13 @@ import {
   notifyTaskCustomer,
   notifyTasker,
 } from "../utils/notificationService.js";
+import { buildPointFromCoordinates } from "../utils/geo.js";
+import { normalizeList } from "../utils/normalize.js";
 
 const queueNotification = (notificationPromise) => {
   Promise.resolve(notificationPromise).catch((error) => {
     console.error("Push notification failed:", error);
   });
-};
-
-const parseCoordinate = (value) => {
-  const coordinate = Number(value);
-  return Number.isFinite(coordinate) ? coordinate : null;
-};
-
-const normalizeGeoPoint = (value) => {
-  if (!value || typeof value !== "object") {
-    return undefined;
-  }
-
-  if (value.type === "Point" && Array.isArray(value.coordinates) && value.coordinates.length === 2) {
-    const [lng, lat] = value.coordinates.map(Number);
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      return { type: "Point", coordinates: [lng, lat] };
-    }
-  }
-
-  const lat = parseCoordinate(value.lat ?? value.latitude);
-  const lng = parseCoordinate(value.lng ?? value.longitude);
-
-  if (lat !== null && lng !== null) {
-    return { type: "Point", coordinates: [lng, lat] };
-  }
-
-  return undefined;
-};
-
-const buildGeoPointFromBody = (body) => {
-  const geoFromLocation = normalizeGeoPoint(body.location);
-  if (geoFromLocation) {
-    return geoFromLocation;
-  }
-
-  const lat = parseCoordinate(body.lat ?? body.latitude ?? body.locationLat);
-  const lng = parseCoordinate(body.lng ?? body.longitude ?? body.locationLng);
-
-  if (lat !== null && lng !== null) {
-    return { type: "Point", coordinates: [lng, lat] };
-  }
-
-  return undefined;
 };
 
 const getLocationLabel = (task) => {
@@ -84,20 +43,6 @@ const serializeTasks = (tasks) => tasks.map((task) => serializeTask(task));
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const normalizeQueryList = (value) => {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-};
 
 const serializeMatchingTask = (task) => ({
   ...serializeTask(task),
@@ -105,16 +50,7 @@ const serializeMatchingTask = (task) => ({
     typeof task.distance === "number" ? Number((task.distance / 1000).toFixed(2)) : null,
 });
 
-const buildPointFromCoordinates = (latValue, lngValue) => {
-  const lat = parseCoordinate(latValue);
-  const lng = parseCoordinate(lngValue);
 
-  if (lat === null || lng === null) {
-    return null;
-  }
-
-  return { type: "Point", coordinates: [lng, lat] };
-};
 /**
  * @desc    Create a new task
  * @route   POST /api/tasks
@@ -240,7 +176,7 @@ export const getMatchingNearbyTasks = async (req, res) => {
     const latitude = Number(req.query.latitude);
     const longitude = Number(req.query.longitude);
     const radius = Number(req.query.radius ?? 10);
-    const taskerSkills = normalizeQueryList(req.query.taskerSkill);
+    const taskerSkills = normalizeList(req.query.taskerSkill);
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return res.status(400).json({ message: "latitude and longitude are required" });

@@ -1,16 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { buildCookieOptions, buildClearCookieOptions } from "../utils/cookie.js";
 
 const ADMIN_COOKIE_NAME = "adminToken";
 const ADMIN_COOKIE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
-
-const getCookieOptions = () => ({
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: ADMIN_COOKIE_MAX_AGE,
-    path: "/",
-});
 
 /**
  * Admin Login
@@ -56,7 +49,7 @@ export const adminLogin = async (req, res) => {
         );
         
         // Set secure cookie
-        res.cookie(ADMIN_COOKIE_NAME, token, getCookieOptions());
+        res.cookie(ADMIN_COOKIE_NAME, token, buildCookieOptions(ADMIN_COOKIE_MAX_AGE));
 
         return res.status(200).json({
             message: "Admin login successful",
@@ -77,13 +70,7 @@ export const adminLogin = async (req, res) => {
  */
 export const adminLogout = (req, res) => {
     try {
-        res.clearCookie(ADMIN_COOKIE_NAME, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "none",
-            expires: new Date(0),
-            path: "/",
-        });
+        res.clearCookie(ADMIN_COOKIE_NAME, buildClearCookieOptions());
 
         return res.status(200).json({ message: "Admin logout successful" });
     } catch (error) {

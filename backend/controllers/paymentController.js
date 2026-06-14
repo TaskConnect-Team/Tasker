@@ -1,6 +1,7 @@
 import Task from "../models/Task.js";
 import User from "../models/User.js";
 import Stripe from "stripe";
+import { calculateCommission } from "../utils/payment.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -39,12 +40,7 @@ export const makePayment = async (req, res) => {
   try {
     const task = req.task; // from middleware
 
-    const PLATFORM_COMMISSION_PERCENT = 10;
-
-    const commission =
-      (task.finalPrice * PLATFORM_COMMISSION_PERCENT) / 100;
-
-    const taskerAmount = task.finalPrice - commission;
+    const { commission, taskerAmount } = calculateCommission(task.finalPrice);
 
     task.platformFee = commission;
     task.taskerEarning = taskerAmount;

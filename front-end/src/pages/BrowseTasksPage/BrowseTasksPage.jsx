@@ -1,22 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Filter, MapPin, Search, SlidersHorizontal, Tag, Wallet } from 'lucide-react';
+import { Filter, MapPin, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import BrowseTopBar from '../../components/layout/BrowseTopBar';
 import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
+import SkeletonCard from '../../components/common/SkeletonCard';
+import MobileFilterSheet from '../../components/common/MobileFilterSheet';
 import { SHARED_SKILLS } from '../../constants/skills';
-const SkeletonCard = ({ delay }) => (
-  <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-    style={{ animationDelay: `${delay}ms`, animationFillMode: 'backwards' }}
-  // 
-  >
-    <div className="h-4 w-1/2 rounded bg-slate-200"></div>
-    <div className="mt-3 h-3 w-1/3 rounded bg-slate-100"></div>
-    <div className="mt-4 h-3 w-full rounded bg-slate-100"></div>
-  </div>
-);
 
 
 const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChange, handleApply, handleClear, isMobile = false }) => (
@@ -291,47 +282,19 @@ function BrowseTasksPage() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isFilterOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-slate-900/40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsFilterOpen(false)}
-            />
-            <motion.div
-              className="fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-white p-5 shadow-2xl"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-slate-900">Filters</div>
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="text-xs   rounded-full bg-slate-200 px-2 py-1 hover:bg-slate-300 cursor-pointer"
-                >
-                  Reset Filters
-                </button>
-              </div>
-              <div className="mt-4">
-                {/* 3. UPDATE THE MOBILE CALL */}
-                <FiltersPanel
-                  formState={formState}
-                  handleChange={handleChange}
-                  handleApply={handleApply}
-                  handleClear={handleClear}
-                  isMobile={true}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <MobileFilterSheet
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onClear={handleClear}
+      >
+        <FiltersPanel
+          formState={formState}
+          handleChange={handleChange}
+          handleApply={handleApply}
+          handleClear={handleClear}
+          isMobile={true}
+        />
+      </MobileFilterSheet>
     </div>
   );
 }
