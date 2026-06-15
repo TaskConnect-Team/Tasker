@@ -2,6 +2,9 @@
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js");
 
+// These values are injected at deploy-time by the CI/CD pipeline.
+// They match the VITE_FIREBASE_* env vars used by the main app.
+// TODO: replace with a build step that generates this file from env vars.
 firebase.initializeApp({
   apiKey: "AIzaSyCEMSnhL_b_K1KfbDArFoV-Gcg3kZyYP1w",
   authDomain: "taskconnect-web.firebaseapp.com",

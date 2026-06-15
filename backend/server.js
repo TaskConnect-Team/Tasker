@@ -77,26 +77,32 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/payments", paymentRoutes);
 
 
-// MongoDB connection
-connectDB();
-
-// Force Mongoose to build the index programmatically
-// createSpatialIndex();
-
-
-// const DB_URL = process.env.atlas_URL;
-
-// mongoose.connect(DB_URL)
-//   .then(() => console.log("✅ MongoDB connected"))
-//   .catch(err => console.log("❌ MongoDB connection error:", err));
-
-// Routes
 app.get("/", (req, res) => {
-  console.log("Server is running on port " + PORT);
   res.send("Hello from Express Server");
 });
 
+// Global error-handling middleware
+app.use((err, req, res, _next) => {
+  console.error("Unhandled error:", err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    message: process.env.NODE_ENV === "production"
+      ? "Internal server error"
+      : err.message || "Internal server error",
+  });
+});
 
+// Graceful shutdown on unhandled errors
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
 
-// Server
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server started on http://localhost:${PORT}`));
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
+});
+
+// Connect to DB then start server
+connectDB().then(() => {
+  app.listen(PORT, '0.0.0.0', () => console.log(`Server started on http://localhost:${PORT}`));
+});

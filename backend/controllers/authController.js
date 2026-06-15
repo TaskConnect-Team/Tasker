@@ -3,46 +3,22 @@ import Otp from "../models/Otp.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { sendOtpEmail } from "../utils/sendEmail.js";
+import { buildSafeUser } from "../utils/serializeUser.js";
+import { buildCookieOptions, buildClearCookieOptions } from "../utils/cookie.js";
 
 const AUTH_COOKIE_NAME = "token";
 const AUTH_COOKIE_MAX_AGE = 2 * 60 * 60 * 1000;
 const ALLOWED_ROLES = new Set(["customer", "tasker"]);
-
-const buildSafeUser = (user) => ({
-  id: user._id.toString(),
-  name: user.name,
-  email: user.email,
-  role: user.role,
-  profileImage: user.profileImage || null,
-  tagline: user.tagline || "",
-  bio: user.bio || "",
-  hourlyRate: user.hourlyRate ?? null,
-  location: user.locationLabel || user.city || "",
-  geoLocation: user.location?.type === "Point" ? user.location : null,
-  skills: user.skills || [],
-  portfolio: user.portfolio || "",
-  services: user.services || [],
-  availability: user.availability ?? true,
-  isVerified: user.isVerified ?? false,
-});
 
 const createAuthToken = (userId, role) =>
   jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 
-const getCookieOptions = () => ({
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  maxAge: AUTH_COOKIE_MAX_AGE,
-  path: "/",
-});
-
 const sendAuthResponse = (res, user, statusCode, message) => {
   const token = createAuthToken(user._id, user.role);
 
-  res.cookie(AUTH_COOKIE_NAME, token, getCookieOptions());
+  res.cookie(AUTH_COOKIE_NAME, token, buildCookieOptions(AUTH_COOKIE_MAX_AGE));
 
   return res.status(statusCode).json({
     message,
@@ -52,13 +28,7 @@ const sendAuthResponse = (res, user, statusCode, message) => {
 };
 
 const clearAuthCookie = (res) => {
-  res.clearCookie(AUTH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    expires: new Date(0),
-    path: "/",
-  });
+  res.clearCookie(AUTH_COOKIE_NAME, buildClearCookieOptions());
 };
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -73,6 +43,10 @@ export const signupUser = async (req, res) => {
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
     }
 
     const role = incomingRole || "customer";

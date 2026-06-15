@@ -5,15 +5,19 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: true,
-        type: 'classic',
-      },
+      // devOptions: {
+      //   enabled: true,
+      //   type: 'classic',
+      // },
 
       workbox: {
         importScripts: ['/firebase-messaging-sw.js'],

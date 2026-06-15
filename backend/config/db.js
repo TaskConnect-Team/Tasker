@@ -17,14 +17,14 @@ export default connectDB;
 
 
 
-// Force Mongoose to build the index programmatically
 async function createSpatialIndex() {
   try {
-    await mongoose.model('Task').cleanIndexes(); // Optional: clears broken indexes
+    await mongoose.model('Task').cleanIndexes();
     await mongoose.model('Task').ensureIndexes();
-    console.log("✅ 2dsphere index built successfully!");
+    console.log("2dsphere index built successfully");
   } catch (err) {
-    console.error("❌ Index creation failed:", err);
+    console.error("Index creation failed:", err);
+    throw err;
   }
 }
 

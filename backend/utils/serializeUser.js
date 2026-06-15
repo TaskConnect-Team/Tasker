@@ -1,0 +1,18 @@
+export const buildSafeUser = (user) => ({
+  id: user._id.toString(),
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  profileImage: user.profileImage || null,
+  tagline: user.tagline || "",
+  bio: user.bio || "",
+  hourlyRate: user.hourlyRate ?? null,
+  location: user.locationLabel || user.city || "",
+  geoLocation: user.location?.type === "Point" ? user.location : null,
+  skills: user.skills || [],
+  portfolio: user.portfolio || "",
+  services: user.services || [],
+  availability: user.availability ?? true,
+  isVerified: user.isVerified ?? false,
+  trustScore: user.trustScore ?? 5.0,
+});
