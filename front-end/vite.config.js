@@ -14,10 +14,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: true,
-        type: 'classic',
-      },
+      // devOptions: {
+      //   enabled: true,
+      //   type: 'classic',
+      // },
 
       workbox: {
         importScripts: ['/firebase-messaging-sw.js'],
