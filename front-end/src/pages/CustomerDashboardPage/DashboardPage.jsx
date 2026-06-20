@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import api from '../../api/axios'
 import AnimatedNumber from '../../components/common/AnimatedNumber'
-import SectionTitle from '../../components/common/SectionTitle'
 import Button from '../../components/ui/Button'
 import { useAuth } from '../../context/AuthContext'
 
@@ -154,9 +153,9 @@ function DashboardPage() {
                   key={card.key}
                   type={isClickable ? 'button' : undefined}
                   onClick={isClickable ? () => handleNavigate(card.tab) : undefined}
-                  whileHover={isClickable ? { y: -5 } : undefined}
+                  whileHover={isClickable ? { scale: 1.05 } : undefined}
                   transition={{ duration: 0.2 }}
-                  className="group flex h-full flex-col gap-4 rounded-3xl border border-blue-500 bg-indigo-500 p-5 text-left text-white shadow-sm"
+                  className="group flex h-full flex-col gap-4 rounded-3xl border border-slate-200 bg-cyan-600 p-5 text-left text-white shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">

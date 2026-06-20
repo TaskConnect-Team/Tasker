@@ -27,7 +27,7 @@ function TaskDetailsPage() {
     try {
       const { data } = await api.get(`/tasks/${taskId}`);
 
-      // console.log('Fetched task data:', data);
+      console.log('Fetched task data:', data);
 
       if (isMountedRef.current) {
         setTask(data);
@@ -97,11 +97,12 @@ function TaskDetailsPage() {
   const isUrgent = task?.urgency === 'urgent';
   const ratingValue = task?.customer?.trustScore ?? 4.8;
   const customerName = task?.customer?.name ?? 'Customer';
+  const customerId = task?.customer?._id || null;
   const coordinates = task?.geoLocation?.coordinates;
   const mapCenter = coordinates
     ? { lat: coordinates[1], lng: coordinates[0] } // Google Maps needs { lat, lng }
     : null;
-;
+  ;
 
   const showAccept = taskStatus === 'open' && user?.role === 'tasker';
   const showStart =
@@ -146,7 +147,7 @@ function TaskDetailsPage() {
 
   return (
     <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-      <div className="mx-auto w-full max-w-6xl space-y-6 pb-24">
+      <div className="mx-auto w-full max-w-6xl space-y-6 pb-24 lg:p-8">
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -238,19 +239,21 @@ function TaskDetailsPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 }}
-              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm hover:cursor-pointer hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 "
+                type="button"
+                onClick={() => {
+                  if (customerId) {
+                    navigate(`/profile/${customerId}`);
+                  } else {
+                    toast.error('Customer profile not available');
+                  }
+                }
+                }
+              >
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                  {task?.customer?.profileImage ? (
-                    <img
-                      src={task.customer.profileImage}
-                      alt={customerName}
-                      className="h-12 w-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-6 w-6" />
-                  )}
+                  <User className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{customerName}</p>

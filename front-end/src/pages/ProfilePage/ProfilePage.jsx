@@ -152,8 +152,8 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <div className="flex items-start justify-between gap-4">
+      <section className="rounded-2xl border border-slate-200 bg-white py-6 lg:px-6">
+        <div className="flex items-start justify-between gap-4 p-2">
           <div className="flex items-center gap-4">
 
 

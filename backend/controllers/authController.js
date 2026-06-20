@@ -135,7 +135,6 @@ export const verifyOtp = async (req, res) => {
       email,
       password,
       role,
-      isVerified: true,
     });
 
     await Otp.deleteMany({ email });
@@ -182,9 +181,13 @@ export const getCurrentUser = async (req, res) => {
 };
 
 export const logoutUser = async (req, res) => {
-  clearAuthCookie(res);
 
-  return res.status(200).json({ message: "Logged out successfully" });
+  try {
+    clearAuthCookie(res);
+    return res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Logout failed' });
+  }
 };
 
 export const verifyUser = getCurrentUser;

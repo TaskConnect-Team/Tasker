@@ -40,8 +40,17 @@ node_modules
 # Build output
 build   
 dist
+dev-dist
 dist-ssr
 *.local
+frontend/dist
+frontend/build
+frontend/.next
+frontend/.nuxt
+frontend/dev-dist
+frontend/dist-ssr
+frontend/*.local
+backend/hashPass.js
 
 # Editor directories and files
 .vscode/*

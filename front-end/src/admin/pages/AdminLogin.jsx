@@ -92,15 +92,15 @@ const AdminLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-gradient-to-br from-cyan-900 via-cyan-800 to-cyan-600 flex items-center justify-center px-4">
             <div className="w-full max-w-md">
                 {/* Logo/Header */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-4 shadow-lg">
-                        <Lock className="text-blue-600" size={32} />
+                        <Lock className="text-cyan-600" size={32} />
                     </div>
                     <h1 className="text-4xl font-bold text-white">TaskConnect</h1>
-                    <p className="text-blue-100 mt-2">Admin Dashboard</p>
+                    <p className="text-cyan-100 mt-2">Admin Dashboard</p>
                 </div>
 
                 {/* Login Card */}
@@ -138,7 +138,7 @@ const AdminLogin = () => {
                                     value={formData.email}
                                     onChange={handleInputChange}
                                     placeholder="admin@taskconnect.com"
-                                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                                     disabled={loading}
                                 />
                             </div>
@@ -157,7 +157,7 @@ const AdminLogin = () => {
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     placeholder="••••••••"
-                                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                                     disabled={loading}
                                 />
                             </div>
@@ -167,7 +167,7 @@ const AdminLogin = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                            className="w-full py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 text-white font-semibold rounded-lg hover:from-cyan-700 hover:to-cyan-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
                         >
                             {loading ? (
                                 <>
@@ -184,8 +184,8 @@ const AdminLogin = () => {
                     </form>
 
                     {/* Security Note */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-xs text-blue-800">
+                    <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+                        <p className="text-xs text-cyan-800">
                             🔒 <strong>Security Notice:</strong> This is a restricted admin panel. All access
                             is logged and monitored. Unauthorized access attempts are tracked.
                         </p>
@@ -193,7 +193,7 @@ const AdminLogin = () => {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-blue-100 text-sm mt-8">
+                <p className="text-center text-cyan-100 text-sm mt-8">
                     © 2024 TaskConnect Admin. All rights reserved.
                 </p>
             </div>

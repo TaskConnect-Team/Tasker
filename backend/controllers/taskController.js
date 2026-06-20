@@ -1,5 +1,6 @@
 import Task from "../models/Task.js";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 import {
   notifyMatchingTaskersForTask,
   notifyTaskCustomer,
@@ -42,6 +43,8 @@ const serializeTask = (task) => {
 const serializeTasks = (tasks) => tasks.map((task) => serializeTask(task));
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const COMPLETED_PAYMENT_STATUSES = ["completed", "reviewed", "paid"];
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 
 const serializeMatchingTask = (task) => ({
@@ -49,6 +52,51 @@ const serializeMatchingTask = (task) => ({
   distanceKm:
     typeof task.distance === "number" ? Number((task.distance / 1000).toFixed(2)) : null,
 });
+
+const getRangeConfig = (range) => {
+  const now = new Date();
+
+  if (range === "weekly") {
+    const startDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - 7 * 7);
+
+    return {
+      startDate,
+      groupId: {
+        year: { $year: "$createdAt" },
+        week: { $week: "$createdAt" },
+      },
+      sort: { "_id.year": 1, "_id.week": 1 },
+      formatName: ({ year, week }) => `Wk ${week}, ${String(year).slice(-2)}`,
+    };
+  }
+
+  if (range === "yearly") {
+    const startDate = new Date(now.getFullYear() - 4, 0, 1);
+
+    return {
+      startDate,
+      groupId: {
+        year: { $year: "$createdAt" },
+      },
+      sort: { "_id.year": 1 },
+      formatName: ({ year }) => String(year),
+    };
+  }
+
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  return {
+    startDate,
+    groupId: {
+      year: { $year: "$createdAt" },
+      month: { $month: "$createdAt" },
+    },
+    sort: { "_id.year": 1, "_id.month": 1 },
+    formatName: ({ month }) => MONTH_LABELS[month - 1] || "",
+  };
+};
 
 
 /**
@@ -588,6 +636,88 @@ export const taskerDashboard = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Get tasker earnings dashboard data
+ * @route   GET /api/tasks/earnings?range=weekly|monthly|yearly
+ * @access  Tasker
+ */
+export const getTaskerEarnings = async (req, res) => {
+  try {
+    const taskerId = new mongoose.Types.ObjectId(req.user.id);
+    const requestedRange = String(req.query.range || "monthly").toLowerCase();
+    const range = ["weekly", "monthly", "yearly"].includes(requestedRange)
+      ? requestedRange
+      : "monthly";
+    const rangeConfig = getRangeConfig(range);
+
+    const baseMatch = {
+      tasker: taskerId,
+      status: { $in: COMPLETED_PAYMENT_STATUSES },
+    };
+
+    const [user, lifetimeMetrics, history, recentPayouts] = await Promise.all([
+      User.findById(taskerId).select("balance"),
+      Task.aggregate([
+        { $match: baseMatch },
+        {
+          $group: {
+            _id: null,
+            totalEarnings: { $sum: { $ifNull: ["$taskerEarning", 0] } },
+            totalPlatformFees: { $sum: { $ifNull: ["$platformFee", 0] } },
+            completedTasksCount: { $sum: 1 },
+          },
+        },
+      ]),
+      Task.aggregate([
+        {
+          $match: {
+            ...baseMatch,
+            createdAt: { $gte: rangeConfig.startDate },
+          },
+        },
+        {
+          $group: {
+            _id: rangeConfig.groupId,
+            earnings: { $sum: { $ifNull: ["$taskerEarning", 0] } },
+            platformFees: { $sum: { $ifNull: ["$platformFee", 0] } },
+            tasks: { $sum: 1 },
+          },
+        },
+        { $sort: rangeConfig.sort },
+      ]),
+      Task.find(baseMatch)
+        .select("title finalPrice price platformFee taskerEarning createdAt")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+    ]);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const metrics = lifetimeMetrics[0] || {};
+    const chartData = history.map((item) => ({
+      name: rangeConfig.formatName(item._id),
+      Earnings: item.earnings || 0,
+      platformFees: item.platformFees || 0,
+      completedTasks: item.tasks || 0,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      walletBalance: user.balance || 0,
+      totalEarnings: metrics.totalEarnings || 0,
+      completedTasks: metrics.completedTasksCount || 0,
+      platformFeesPaid: metrics.totalPlatformFees || 0,
+      chartData,
+      recentPayouts,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
