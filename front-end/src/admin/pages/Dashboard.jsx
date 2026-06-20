@@ -26,7 +26,7 @@ const Dashboard = () => {
                 api.get('/admin/kpis'),
                 api.get('/admin/charts-data')
             ]);
-            if (kpisRes.status !== 200 || chartsRes.status !== 200 ) {
+            if (kpisRes.status !== 200 || chartsRes.status !== 200) {
                 throw new Error("Failed to fetch dashboard data");
             }
 
@@ -76,134 +76,135 @@ const Dashboard = () => {
 
     return (
         <AdminLayout>
-            <div className="space-y-8">
-                {/* Page Title */}
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-600 mt-1">Real-time platform overview & analytics</p>
-                </div>
+                <div className="space-y-8">
+                    {/* Page Title */}
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                        <p className="text-gray-600 mt-1">Real-time platform overview & analytics</p>
+                    </div>
 
-                {/* KPI Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <KPICard
-                        title="Platform Revenue"
-                        value={`$${kpis?.platformRevenue?.toLocaleString() || 0}`}
-                        icon={DollarSign}
-                        color="green"
-                    />
-                    <KPICard
-                        title="Escrow Balance"
-                        value={`$${kpis?.escrowTracker?.toLocaleString() || 0}`}
-                        icon={TrendingUp}
-                        color="blue"
-                    />
-                    <KPICard
-                        title="Urgent Tasks"
-                        value={`${kpis?.urgentTaskRatio || 0}%`}
-                        unit=""
-                        icon={AlertTriangle}
-                        color="red"
-                    />
-                    <KPICard
-                        title="Active Taskers"
-                        value={kpis?.activeTaskerSupply || 0}
-                        icon={Users}
-                        color="purple"
-                    />
-                </div>
+                    {/* KPI Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <KPICard
+                            title="Platform Revenue"
+                            value={`$${kpis?.platformRevenue?.toLocaleString() || 0}`}
+                            icon={DollarSign}
+                            color="green"
+                        />
+                        <KPICard
+                            title="Escrow Balance"
+                            value={`$${kpis?.escrowTracker?.toLocaleString() || 0}`}
+                            icon={TrendingUp}
+                            color="blue"
+                        />
+                        <KPICard
+                            title="Urgent Tasks"
+                            value={`${kpis?.urgentTaskRatio || 0}%`}
+                            unit=""
+                            icon={AlertTriangle}
+                            color="red"
+                        />
+                        <KPICard
+                            title="Active Taskers"
+                            value={kpis?.activeTaskerSupply || 0}
+                            icon={Users}
+                            color="purple"
+                        />
+                    </div>
 
-                {/* Heatmap Section */}
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
-                        <h2 className="text-2xl font-bold text-gray-900">Task Demand Heatmap</h2>
-                        <p className="text-gray-600 text-sm mt-1">Geographic distribution of service demand</p>
+                    {/* Heatmap Section */}
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div className="p-6 border-b border-gray-200">
+                            <h2 className="text-2xl font-bold text-gray-900">Task Demand Heatmap</h2>
+                            <p className="text-gray-600 text-sm mt-1">Geographic distribution of service demand</p>
+                        </div>
+                        <div className="p-6">
+                            {chartsData?.heatmapCoordinates && chartsData.heatmapCoordinates.length > 0 ? (
+                                <HeatmapComponent coordinates={chartsData.heatmapCoordinates} />
+                            ) : (
+                                <div className="bg-gray-50 rounded-lg p-12 text-center">
+                                    <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                    <p className="text-gray-600">No task data available for heatmap</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div className="p-6">
-                        {chartsData?.heatmapCoordinates && chartsData.heatmapCoordinates.length > 0 ? (
-                            <HeatmapComponent coordinates={chartsData.heatmapCoordinates} />
-                        ) : (
-                            <div className="bg-gray-50 rounded-lg p-12 text-center">
-                                <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                                <p className="text-gray-600">No task data available for heatmap</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Cancellation Rate Chart */}
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
-                        <h2 className="text-2xl font-bold text-gray-900">Task Cancellation Rate</h2>
-                        <p className="text-gray-600 text-sm mt-1">Daily cancellation trends over time</p>
+                    {/* Cancellation Rate Chart */}
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div className="p-6 border-b border-gray-200">
+                            <h2 className="text-2xl font-bold text-gray-900">Task Cancellation Rate</h2>
+                            <p className="text-gray-600 text-sm mt-1">Daily cancellation trends over time</p>
+                        </div>
+                        <div className="p-6">
+                            {chartsData?.cancellationData && chartsData.cancellationData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <LineChart data={chartsData.cancellationData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="date"
+                                            tick={{ fontSize: 12 }}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={80}
+                                        />
+                                        <YAxis label={{ value: "Cancellation Rate (%)", angle: -90, position: "insideLeft" }} />
+                                        <Tooltip
+                                            formatter={(value) => `${value.toFixed(2)}%`}
+                                            labelFormatter={(label) => `Date: ${label}`}
+                                        />
+                                        <Legend />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="cancellationRate"
+                                            stroke="#ef4444"
+                                            name="Cancellation Rate (%)"
+                                            dot={{ fill: "#ef4444" }}
+                                            strokeWidth={2}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="totalTasks"
+                                            stroke="#3b82f6"
+                                            name="Total Tasks"
+                                            yAxisId="right"
+                                            strokeWidth={2}
+                                        />
+                                        <YAxis yAxisId="right" orientation="right" label={{ value: "Total Tasks", angle: 90, position: "insideRight" }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="bg-gray-50 rounded-lg p-12 text-center">
+                                    <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                    <p className="text-gray-600">No cancellation data available</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div className="p-6">
-                        {chartsData?.cancellationData && chartsData.cancellationData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={400}>
-                                <LineChart data={chartsData.cancellationData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis
-                                        dataKey="date"
-                                        tick={{ fontSize: 12 }}
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={80}
-                                    />
-                                    <YAxis label={{ value: "Cancellation Rate (%)", angle: -90, position: "insideLeft" }} />
-                                    <Tooltip
-                                        formatter={(value) => `${value.toFixed(2)}%`}
-                                        labelFormatter={(label) => `Date: ${label}`}
-                                    />
-                                    <Legend />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="cancellationRate"
-                                        stroke="#ef4444"
-                                        name="Cancellation Rate (%)"
-                                        dot={{ fill: "#ef4444" }}
-                                        strokeWidth={2}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="totalTasks"
-                                        stroke="#3b82f6"
-                                        name="Total Tasks"
-                                        yAxisId="right"
-                                        strokeWidth={2}
-                                    />
-                                    <YAxis yAxisId="right" orientation="right" label={{ value: "Total Tasks", angle: 90, position: "insideRight" }} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="bg-gray-50 rounded-lg p-12 text-center">
-                                <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                                <p className="text-gray-600">No cancellation data available</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-                        <p className="text-sm font-medium text-blue-900">Total Platform Revenue</p>
-                        <p className="text-3xl font-bold text-blue-600 mt-2">
-                            ${kpis?.platformRevenue?.toLocaleString() || 0}
-                        </p>
-                    </div>
-                    <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
-                        <p className="text-sm font-medium text-orange-900">Current Escrow</p>
-                        <p className="text-3xl font-bold text-orange-600 mt-2">
-                            ${kpis?.escrowTracker?.toLocaleString() || 0}
-                        </p>
-                    </div>
-                    <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
-                        <p className="text-sm font-medium text-purple-900">Available Taskers</p>
-                        <p className="text-3xl font-bold text-purple-600 mt-2">
-                            {kpis?.activeTaskerSupply || 0}
-                        </p>
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+                            <p className="text-sm font-medium text-blue-900">Total Platform Revenue</p>
+                            <p className="text-3xl font-bold text-blue-600 mt-2">
+                                ${kpis?.platformRevenue?.toLocaleString() || 0}
+                            </p>
+                        </div>
+                        <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
+                            <p className="text-sm font-medium text-orange-900">Current Escrow</p>
+                            <p className="text-3xl font-bold text-orange-600 mt-2">
+                                ${kpis?.escrowTracker?.toLocaleString() || 0}
+                            </p>
+                        </div>
+                        <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
+                            <p className="text-sm font-medium text-purple-900">Available Taskers</p>
+                            <p className="text-3xl font-bold text-purple-600 mt-2">
+                                {kpis?.activeTaskerSupply || 0}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            
         </AdminLayout>
     );
 };

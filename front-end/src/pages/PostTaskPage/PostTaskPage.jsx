@@ -110,7 +110,7 @@ const PostTaskPage = () => {
 
   return (
     <div className="">
-      <div className="mx-auto max-w-2xl px-4">
+      <div className=" max-w-2xl ">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-slate-900">Post a New Task</h1>
@@ -189,7 +189,7 @@ const PostTaskPage = () => {
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 shadow-inner">
-                  <div className="flex gap-2 overflow-x-auto pb-1">
+                  <div className="flex flex-wrap justify-center gap-2 overflow-x-auto pb-1">
                     {nextSevenDays.map((day) => {
                       const isSelected = selectedDay?.toDateString() === day.toDateString();
 

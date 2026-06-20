@@ -9,14 +9,29 @@ const getServiceWorkerRegistration = async () => {
     return null;
   }
 
-  const existingRegistration = await navigator.serviceWorker.getRegistration("/");
-  if (existingRegistration?.active) {
-    return existingRegistration;
+
+  try {
+    // 1. VitePWA registers the service worker under the path name "/sw.js"
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    const pwaRegistration = registrations.find(reg => 
+      reg.active && reg.active.scriptURL.includes("sw.js")
+    );
+
+    if (pwaRegistration) {
+      return pwaRegistration;
+    }
+
+    // 2. Fallback to wait for ready status if found but not active
+    const readyRegistration = await navigator.serviceWorker.ready;
+    if (readyRegistration) {
+      return readyRegistration;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch PWA service worker:", error);
+    return null;
   }
-
-  // await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-
-  return await navigator.serviceWorker.ready;
 };
 
 const getNotificationUrl = (payload = {}) => {
@@ -62,7 +77,7 @@ export const requestNotificationPermission = async () => {
     throw new Error("Service workers are not supported in this browser");
   }
 
-  // console.log("Current VAPID key, messaging, registration ------ :",import.meta.env.VITE_FIREBASE_VAPID_KEY, messaging, registration);
+  console.log("Current VAPID key, messaging, registration ------ :",import.meta.env.VITE_FIREBASE_VAPID_KEY, messaging, registration);
 
   const token = await getToken(messaging, {
     vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,

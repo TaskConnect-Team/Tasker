@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, ClipboardList, Clock, Hourglass, XCircle } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +24,7 @@ function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const navigate = useNavigate();
 
   const role = user?.role ?? 'customer';
 
@@ -181,12 +182,14 @@ function OrdersPage() {
             filteredTasks.map((task) => (
               <div
                 key={task._id}
-                className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between"
+                type="button"
+                onClick={() => navigate(`/tasks/${task._id}`)}
+                className="flex flex-col gap-4 rounded-2xl border border-slate-200 hover:shadow-lg hover:scale-105 transition-all bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between"
               >
                 <div>
                   <div className="text-sm font-semibold text-slate-900">{task.title}</div>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                    <span>{task.location || 'Remote'}</span>
+                    <span>{task.city || 'Remote'}</span>
                     <span className="rounded-full border border-slate-200 px-2 py-0.5">
                       {statusLabel[task.status] ?? task.status}
                     </span>

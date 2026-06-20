@@ -10,6 +10,7 @@ import {
   getMyTasks,
   getAssignedTasks,
    getTaskerTasks,
+   getTaskerEarnings,
   startTask,
    completeTaskByTasker,
   completeTaskByCustomer,
@@ -58,6 +59,9 @@ router.get("/matching-nearby", protect, authorizeRoles("tasker"), getMatchingNea
 // Tasker views dashboard
 
 router.get("/dashboard/tasker", protect, authorizeRoles("tasker"), taskerDashboard);
+
+// Tasker views earnings dashboard
+router.get("/earnings", protect, authorizeRoles("tasker"), getTaskerEarnings);
 
 // Tasker views tasks assigned to them
 router.get("/assigned", protect, authorizeRoles("tasker"), getAssignedTasks);

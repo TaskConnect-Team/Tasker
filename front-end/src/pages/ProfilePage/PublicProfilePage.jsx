@@ -45,7 +45,7 @@ function PublicProfilePage() {
   }, [userId]);
 
   const skills = useMemo(() => profile?.skills || [], [profile]);
-  const portfolio = useMemo(() => profile?.portfolio || [], [profile]);
+  const portfolio = useMemo(() => profile?.portfolio || "", [profile]);
 
   if (loading) {
     return (
@@ -134,18 +134,15 @@ function PublicProfilePage() {
           <div className="mt-5">
             <h3 className="text-sm font-semibold text-slate-900">Portfolio</h3>
             <div className="mt-2 grid gap-3 md:grid-cols-2">
-              {portfolio.length ? (
-                portfolio.map((link) => (
-                  <a
-                    key={link}
-                    href={link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border border-slate-200 p-3 text-xs text-slate-600 hover:border-slate-300"
-                  >
-                    {link}
-                  </a>
-                ))
+              {portfolio && portfolio.trim() !== "" ? (
+                <a
+                  href={portfolio}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  {portfolio}
+                </a>
               ) : (
                 <p className="text-sm text-slate-500">No portfolio links yet.</p>
               )}
@@ -158,7 +155,7 @@ function PublicProfilePage() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-xs text-slate-500">Tasks Posted</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">—</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{profile.tasksPosted || 0}</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-xs text-slate-500">Trust Score</p>

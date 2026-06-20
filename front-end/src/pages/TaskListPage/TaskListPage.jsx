@@ -1,4 +1,3 @@
-import SectionTitle from '../../components/common/SectionTitle'
 
 const tasks = [
   { id: 'T-1001', title: 'Design landing page', status: 'In progress' },
@@ -9,7 +8,12 @@ const tasks = [
 function TaskListPage() {
   return (
     <section className="space-y-6">
-      <SectionTitle title="Task List" subtitle="A simple starter list for managing active work." />
+      <div>
+        <h1>
+          Task list page
+        </h1>
+        <p>this is ...</p>
+      </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-600">

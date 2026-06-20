@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await removeCurrentFcmToken();
+      // await removeCurrentFcmToken();
       await api.post('/auth/logout');
 
     } catch (error) {
