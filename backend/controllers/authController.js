@@ -35,6 +35,8 @@ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // SIGNUP USER
 export const signupUser = async (req, res) => {
+
+  console.log("user Signing up ......")
   try {
     const name = req.body.name?.trim();
     const email = req.body.email?.trim().toLowerCase();
