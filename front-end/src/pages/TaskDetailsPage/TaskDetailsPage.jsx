@@ -146,7 +146,7 @@ function TaskDetailsPage() {
 
   return (
     <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-      <div className="mx-auto w-full max-w-6xl space-y-6 pb-24">
+      <div className="mx-auto w-full max-w-6xl space-y-6 pb-24 lg:p-8">
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

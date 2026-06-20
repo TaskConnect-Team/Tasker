@@ -135,7 +135,6 @@ export const verifyOtp = async (req, res) => {
       email,
       password,
       role,
-      isVerified: true,
     });
 
     await Otp.deleteMany({ email });
