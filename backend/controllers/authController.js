@@ -81,10 +81,12 @@ export const signupUser = async (req, res) => {
     });
 
     try {
+      console.log("Sending OTP email to:", email);
       const transResult = await sendOtpEmail(email, otp);
       console.log("OTP email sent:", transResult.response);
     } catch (emailError) {
       await Otp.deleteMany({ email });
+      console.log("Failed to send email ....");
       throw emailError;
     }
 
