@@ -6,12 +6,12 @@ importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-com
 // They match the VITE_FIREBASE_* env vars used by the main app.
 // TODO: replace with a build step that generates this file from env vars.
 firebase.initializeApp({
-  apiKey: "AIzaSyCEMSnhL_b_K1KfbDArFoV-Gcg3kZyYP1w",
-  authDomain: "taskconnect-web.firebaseapp.com",
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: "taskconnect-web",
-  storageBucket: "taskconnect-web.appspot.com",
-  messagingSenderId: "305816675590",
-  appId: "1:305816675590:web:f2cf54b2f280469a7e2a87",
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID ,
 });
 
 const messaging = firebase.messaging();
