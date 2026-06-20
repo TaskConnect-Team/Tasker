@@ -4,35 +4,59 @@ import api from "../api/axios.js";
 
 const messaging = getMessaging(app);
 
+
 const getServiceWorkerRegistration = async () => {
   if (!("serviceWorker" in navigator)) {
     return null;
   }
 
-
   try {
-    // 1. VitePWA registers the service worker under the path name "/sw.js"
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    const pwaRegistration = registrations.find(reg => 
-      reg.active && reg.active.scriptURL.includes("sw.js")
-    );
-
-    if (pwaRegistration) {
-      return pwaRegistration;
+    // 1. Fetch the main container control reference from the browser
+    const registration = await navigator.serviceWorker.ready;
+    
+    // 2. Safeguard check: If the registration is valid but the active target is empty, wait
+    if (registration && !registration.active) {
+      console.log("Service worker is not active yet, waiting...");
+      // Wait for a brief window until installation tasks complete
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
-    // 2. Fallback to wait for ready status if found but not active
-    const readyRegistration = await navigator.serviceWorker.ready;
-    if (readyRegistration) {
-      return readyRegistration;
-    }
-
-    return null;
+    return registration;
   } catch (error) {
-    console.error("Failed to fetch PWA service worker:", error);
+    console.error("Failed to parse ready PWA worker instance:", error);
     return null;
   }
 };
+
+// const getServiceWorkerRegistration = async () => {
+//   if (!("serviceWorker" in navigator)) {
+//     return null;
+//   }
+
+
+//   try {
+//     // 1. VitePWA registers the service worker under the path name "/sw.js"
+//     const registrations = await navigator.serviceWorker.getRegistrations();
+//     const pwaRegistration = registrations.find(reg => 
+//       reg.active && reg.active.scriptURL.includes("sw.js")
+//     );
+
+//     if (pwaRegistration) {
+//       return pwaRegistration;
+//     }
+
+//     // 2. Fallback to wait for ready status if found but not active
+//     const readyRegistration = await navigator.serviceWorker.ready;
+//     if (readyRegistration) {
+//       return readyRegistration;
+//     }
+
+//     return null;
+//   } catch (error) {
+//     console.error("Failed to fetch PWA service worker:", error);
+//     return null;
+//   }
+// };
 
 const getNotificationUrl = (payload = {}) => {
   const data = payload.data || {};
