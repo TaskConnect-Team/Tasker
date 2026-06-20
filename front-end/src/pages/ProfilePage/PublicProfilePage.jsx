@@ -155,7 +155,7 @@ function PublicProfilePage() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-xs text-slate-500">Tasks Posted</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">—</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">{profile.tasksPosted || 0}</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-xs text-slate-500">Trust Score</p>
