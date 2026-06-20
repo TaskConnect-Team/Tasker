@@ -9,6 +9,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
   },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   plugins: [
     react(),
     tailwindcss(),
