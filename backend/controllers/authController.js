@@ -36,7 +36,6 @@ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString()
 // SIGNUP USER
 export const signupUser = async (req, res) => {
 
-  console.log("user Signing up ......")
   try {
     const name = req.body.name?.trim();
     const email = req.body.email?.trim().toLowerCase();
@@ -57,7 +56,7 @@ export const signupUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid role" });
     }
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    if (!process.env.EMAIL_USER || !process.env.BREVO_API_KEY) {
       return res.status(500).json({ message: "Email service is not configured" });
     }
 
@@ -83,12 +82,10 @@ export const signupUser = async (req, res) => {
     });
 
     try {
-      console.log("Sending OTP email to:", email);
       const transResult = await sendOtpEmail(email, otp);
       console.log("OTP email sent:", transResult.response);
     } catch (emailError) {
       await Otp.deleteMany({ email });
-      console.log("Failed to send email ....");
       throw emailError;
     }
 
