@@ -15,7 +15,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: false,
+        enabled: true,
         type: 'classic',
       },
 
@@ -42,7 +42,7 @@ export default defineConfig({
         short_name: 'TaskConnect',
         description: 'Smart Task Marketplace',
         theme_color: '#ffffff',
-        gcm_sender_id: '103953800507',
+        gcm_sender_id: '305816675590',
         icons: [
           {
             src: '/icon-192.png',
