@@ -259,7 +259,7 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
                     </div>
                   </div>
                   <a
-                    href={`/tasks/${activeTask.id}`}
+                    href={`/tasks/${activeTask._id}`}
                     className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
                   >
                     View Task Details

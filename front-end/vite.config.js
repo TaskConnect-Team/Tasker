@@ -9,16 +9,17 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
   },
+  // 1. FIXED: Changed from './' to '/' so assets always load from the root domain
+  base: '/', 
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      // devOptions: {
-      //   enabled: true,
-      //   type: 'classic',
-      // },
-
+      devOptions: {
+        enabled: true,
+        type: 'classic',
+      },
       workbox: {
         importScripts: ['/firebase-messaging-sw.js'],
         runtimeCaching: [
@@ -33,10 +34,8 @@ export default defineConfig({
               }
             }
           }
-
         ]
       },
-
       manifest: {
         name: 'TaskConnect',
         short_name: 'TaskConnect',
@@ -58,6 +57,4 @@ export default defineConfig({
       }
     })
   ]
-
-
 })

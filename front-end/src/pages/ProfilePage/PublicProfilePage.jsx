@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { BadgeCheck, MapPin, Mail, DollarSign } from 'lucide-react';
+import { BadgeCheck, MapPin, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
-import { useAuth } from '../../context/AuthContext';
+import Button from '../../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 
 const DEFAULT_IMAGE =
   'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
 
 function PublicProfilePage() {
   const { userId } = useParams();
-  const { user: authUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const isOwner = authUser?.id === userId;
 
   useEffect(() => {
     let mounted = true;
@@ -88,15 +88,9 @@ function PublicProfilePage() {
               </div>
             </div>
           </div>
-          {!isOwner ? (
-            <button
-              type="button"
-              className="inline-flex items-center   gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
-            >
-              <Mail className="h-4 w-4" />
-              Contact
-            </button>
-          ) : null}
+          <Button variant="secondary" onClick={() => navigate(-1)}>
+            Back
+          </Button>
         </div>
         <div className="mt-4 text-xs text-slate-500">Member since {profile.memberSince || '—'}</div>
       </section>
