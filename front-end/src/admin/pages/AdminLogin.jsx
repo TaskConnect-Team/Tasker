@@ -18,7 +18,7 @@ const AdminLogin = () => {
         const checkExistingAuth = async () => {
             try {
                 // Ping the verify route with credentials included
-               const response = await api.get('/admin/verify');
+                const response = await api.get('/admin/verify');
 
                 // Axios only reaches here if status is 2xx (Success)
                 if (response.status === 200) {
@@ -58,7 +58,7 @@ const AdminLogin = () => {
             setLoading(true);
 
             const response = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/api/admin/login`,
+                `${import.meta.env.VITE_API_BASE_URL}/api/admin/login`,
                 {
                     method: "POST",
                     credentials: "include",
