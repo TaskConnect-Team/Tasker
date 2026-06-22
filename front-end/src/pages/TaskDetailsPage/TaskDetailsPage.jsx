@@ -160,7 +160,7 @@ function TaskDetailsPage() {
                 {statusLabel}
               </span>
               <Button variant="secondary" onClick={() => navigate(-1)}>
-                Back to tasks
+                Back
               </Button>
             </div>
 

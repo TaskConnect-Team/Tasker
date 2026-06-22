@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { AlertCircle, Loader, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import  { useEffect, useState } from "react";
+import { AlertCircle, Loader, CheckCircle,  } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
+import toast from "react-hot-toast";
 
 const Moderation = () => {
   const [unverifiedTaskers, setUnverifiedTaskers] = useState([]);
@@ -71,10 +72,10 @@ const Moderation = () => {
         prev.filter((t) => t._id !== taskerId)
       );
 
-      alert(`✅ ${result.message}`);
+      toast.success(`✅ ${result.message}`);
     } catch (error) {
       console.error("Verify error:", error);
-      alert("❌ Error verifying tasker");
+      toast.error("❌ Error verifying tasker");
     } finally {
       setProcessing((prev) => ({ ...prev, [taskerId]: false }));
     }
@@ -84,7 +85,7 @@ const Moderation = () => {
     const newScore = trustScoreInput[taskerId];
 
     if (!newScore || isNaN(newScore) || newScore < 0 || newScore > 10) {
-      alert("❌ Trust score must be a number between 0 and 10");
+      toast.error("❌ Trust score must be a number between 0 and 10");
       return;
     }
 
@@ -117,10 +118,10 @@ const Moderation = () => {
       );
 
       setTrustScoreInput((prev) => ({ ...prev, [taskerId]: "" }));
-      alert("✅ Trust score updated successfully");
+      toast.success("✅ Trust score updated successfully");
     } catch (error) {
       console.error("Update trust score error:", error);
-      alert("❌ Error updating trust score");
+      toast.error("❌ Error updating trust score");
     } finally {
       setProcessing((prev) => ({ ...prev, [taskerId]: false }));
     }
