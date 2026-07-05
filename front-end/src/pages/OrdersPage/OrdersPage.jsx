@@ -52,7 +52,7 @@ function OrdersPage() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const endpoint = role === 'tasker' ? '/tasks/tasker' : '/tasks/my';
+      const endpoint = role === 'tasker' ? '/tasks/tasker' : '/tasks/myTasks';
       const { data } = await api.get(endpoint);
       setTasks(Array.isArray(data) ? data : []);
     } catch (error) {

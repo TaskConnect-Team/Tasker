@@ -35,7 +35,7 @@ router.post("/", protect, authorizeRoles("customer"), createTask);
 // Customer views dashboard
 router.get("/dashboard/customer", protect, authorizeRoles("customer"), customerDashboard);
 // Customer views their own tasks
-router.get("/my", protect, authorizeRoles("customer"), getMyTasks);
+router.get("/myTasks", protect, authorizeRoles("customer"), getMyTasks);
 
 // Customer cancels a task (only if open)
 router.patch("/:id/cancel", protect, authorizeRoles("customer"), cancelTask);

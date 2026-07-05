@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
     const syncUser = async () => {
       try {
-        const { data } = await api.get('/auth/me');
+        const { data } = await api.get('/auth/verifyMe');
         // console.log('Fetched user data from server:', data);
 
         if (!mounted) {
