@@ -10,7 +10,19 @@ export default defineConfig({
     globals: true,
   },
   // 1. FIXED: Changed from './' to '/' so assets always load from the root domain
-  base: '/', 
+  base: '/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Splits vendor libraries from node_modules into separate chunks
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     tailwindcss(),
