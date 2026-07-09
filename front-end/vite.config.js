@@ -33,6 +33,7 @@ export default defineConfig({
         type: 'classic',
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 3500000,
         importScripts: ['/firebase-messaging-sw.js'],
         runtimeCaching: [
           {
