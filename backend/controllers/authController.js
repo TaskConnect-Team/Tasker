@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { sendOtpEmail } from "../utils/sendEmail.js";
 import { buildSafeUser } from "../utils/serializeUser.js";
 import { buildCookieOptions, buildClearCookieOptions } from "../utils/cookie.js";
+import admin from "../config/adminFirebase.js";
 
 const AUTH_COOKIE_NAME = "token";
 const AUTH_COOKIE_MAX_AGE = 2 * 60 * 60 * 1000;
@@ -15,17 +16,34 @@ const createAuthToken = (userId, role) =>
     expiresIn: "1d",
   });
 
-const sendAuthResponse = (res, user, statusCode, message) => {
-  const token = createAuthToken(user._id, user.role);
+const sendAuthResponse = async(res, user, statusCode, message) => {
+  try {
+    const token = createAuthToken(user._id, user.role);
 
-  res.cookie(AUTH_COOKIE_NAME, token, buildCookieOptions(AUTH_COOKIE_MAX_AGE));
+    const mongoUid = user._id.toString();
+    const firebaseToken = await admin.auth().createCustomToken(mongoUid, {
+      role: user.role
+    });
 
-  return res.status(statusCode).json({
-    message,
-    token,
-    user: buildSafeUser(user),
-  });
+    res.cookie(AUTH_COOKIE_NAME, token, buildCookieOptions(AUTH_COOKIE_MAX_AGE));
+
+    return res.status(statusCode).json({
+      message,
+      token,
+      firebaseToken,
+      user: buildSafeUser(user),
+    });
+  } catch (firebaseError) {
+    console.error("Firebase custom token generation failed:", firebaseError);
+    // Fallback if Firebase fails: log it but don't break the user's primary login session
+    return res.status(statusCode).json({
+      message: `${message} (Real-time features currently unavailable)`,
+      token,
+      user: buildSafeUser(user),
+    });
+  }
 };
+
 
 const clearAuthCookie = (res) => {
   res.clearCookie(AUTH_COOKIE_NAME, buildClearCookieOptions());
@@ -178,7 +196,18 @@ export const getCurrentUser = async (req, res) => {
     return res.status(401).json({ message: "Not authorized" });
   }
 
-  return res.status(200).json({ user: buildSafeUser(req.user) });
+  try {
+
+    const firebaseToken = await admin.auth().createCustomToken(req.user._id.toString(), {
+      role: req.user.role
+    });
+
+    return res.status(200).json({ user: buildSafeUser(req.user), firebaseToken });
+  }
+  catch (error) {
+    return res.status(200).json({ user: buildSafeUser(req.user) });
+
+  }
 };
 
 export const logoutUser = async (req, res) => {

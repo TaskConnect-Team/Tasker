@@ -5,7 +5,9 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import TaskerTrackingModel from '../../models/TaskerTrackingModel';
 import ReviewBottomSheet from '../../components/common/ReviewBottomSheet';
+import { useTaskTracking } from '../../context/TaskTrackingContext';
 
 const statusLabel = {
   open: 'Open',
@@ -24,7 +26,11 @@ function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
   const navigate = useNavigate();
+
+  const { startTracking, stopTracking } = useTaskTracking();
 
   const role = user?.role ?? 'customer';
 
@@ -52,7 +58,7 @@ function OrdersPage() {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const endpoint = role === 'tasker' ? '/tasks/tasker' : '/tasks/my';
+      const endpoint = role === 'tasker' ? '/tasks/tasker' : '/tasks/myTasks';
       const { data } = await api.get(endpoint);
       setTasks(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -117,6 +123,10 @@ function OrdersPage() {
     try {
       await api.patch(`/tasks/${taskId}/start`);
       updateTaskStatus(taskId, 'in-progress');
+
+      // Find the specific task and start the global tracker
+      const taskToTrack = tasks.find(t => t._id === taskId);
+      if (taskToTrack) startTracking(taskToTrack);
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to start task');
     }
@@ -126,6 +136,9 @@ function OrdersPage() {
     try {
       await api.patch(`/tasks/${taskId}/finish`);
       updateTaskStatus(taskId, 'completed');
+
+      // Stop tracking upon success
+      stopTracking();
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to complete task');
     }
@@ -140,6 +153,16 @@ function OrdersPage() {
     setIsReviewOpen(false);
     setSelectedTask(null);
   };
+
+  const handleTrackTasker = (task) => {
+    setSelectedTask(task);
+    setIsMapModalOpen(true);
+  }
+
+  const handleCloseMapModal = () => {
+    setIsMapModalOpen(false);
+    setSelectedTask(null);
+  }
 
   return (
     <section className="space-y-6">
@@ -182,67 +205,86 @@ function OrdersPage() {
             filteredTasks.map((task) => (
               <div
                 key={task._id}
-                type="button"
-                onClick={() => navigate(`/tasks/${task._id}`)}
-                className="flex flex-col gap-4 rounded-2xl border border-slate-200 hover:shadow-lg hover:scale-105 transition-all bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between"
+                className="flex gap-4 rounded-2xl border border-slate-200 hover:shadow-lg hover:scale-105 transition-all bg-white p-6 shadow-sm md:flex-row items-center justify-between"
               >
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">{task.title}</div>
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                    <span>{task.city || 'Remote'}</span>
-                    <span className="rounded-full border border-slate-200 px-2 py-0.5">
-                      {statusLabel[task.status] ?? task.status}
-                    </span>
-                    <span>${task.price}</span>
+                <div className="flex flex-col items-center gap-4">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">{task.title}</div>
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
+                      <span>{task.city || 'Remote'}</span>
+                      <span className="rounded-full border border-slate-200 px-2 py-0.5">
+                        {statusLabel[task.status] ?? task.status}
+                      </span>
+                      <span>${task.price}</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {role === 'customer' && task.status === 'open' && (
-                    <button
-                      type="button"
-                      onClick={() => handleCancel(task._id)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  {role === 'customer' && task.status === 'completed' && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenReview(task)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                    >
-                      Leave a Review
-                    </button>
-                  )}
-                  {role === 'customer' && task.status === 'reviewed' && (
-                    <button
-                      type="button"
-                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-400"
-                      disabled
-                    >
-                      Reviewed
-                    </button>
-                  )}
-                  {role === 'tasker' && task.status === 'assigned' && (
-                    <button
-                      type="button"
-                      onClick={() => handleStart(task._id)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                    >
-                      Start Work
-                    </button>
-                  )}
-                  {role === 'tasker' && task.status === 'in-progress' && (
-                    <button
-                      type="button"
-                      onClick={() => handleFinish(task._id)}
-                      className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                    >
-                      Mark as Completed
-                    </button>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {role === 'customer' && task.status === 'open' && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancel(task._id)}
+                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    {role === 'customer' && task.status === 'in-progress' && (
+                      <button
+                        type="button"
+                        onClick={() => handleTrackTasker(task)}
+                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                      >
+                        Track Tasker
+                      </button>
+                    )}
+                    {role === 'customer' && task.status === 'completed' && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReview(task)}
+                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                      >
+                        Leave a Review
+                      </button>
+                    )}
+                    {role === 'customer' && task.status === 'reviewed' && (
+                      <button
+                        type="button"
+                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-400"
+                        disabled
+                      >
+                        Reviewed
+                      </button>
+                    )}
+                    {role === 'tasker' && task.status === 'assigned' && (
+                      <button
+                        type="button"
+                        onClick={() => handleStart(task._id)}
+                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                      >
+                        Start Work
+                      </button>
+                    )}
+                    {role === 'tasker' && task.status === 'in-progress' && (
+                      <button
+                        type="button"
+                        onClick={() => handleFinish(task._id)}
+                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                      >
+                        Mark as Completed
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+                <div className="flex justify-center items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/tasks/${task._id}`)}
+                    className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  >
+                    View Details
+                  </button>
                 </div>
               </div>
             ))
@@ -259,6 +301,15 @@ function OrdersPage() {
         onClose={handleCloseReview}
         onSuccess={fetchTasks}
       />
+
+      {isMapModalOpen && selectedTask && selectedTask.geoLocation.coordinates ? (
+        <TaskerTrackingModel
+          isOpen={isMapModalOpen}
+          onClose={handleCloseMapModal}
+          taskId={selectedTask._id}
+          destinationCoordinates={selectedTask?.geoLocation?.coordinates}
+        />
+      ) : null}
     </section>
   );
 }

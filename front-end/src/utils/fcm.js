@@ -1,5 +1,5 @@
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import app from "../config/firebaseConfig.js";
+import { app } from "../config/firebase.js";
 import api from "../api/axios.js";
 
 const messaging = getMessaging(app);
@@ -101,13 +101,14 @@ export const requestNotificationPermission = async () => {
     throw new Error("Service workers are not supported in this browser");
   }
 
-  console.log("Current VAPID key, messaging, registration ------ :",import.meta.env.VITE_FIREBASE_VAPID_KEY, messaging, registration);
-
+  
   const token = await getToken(messaging, {
     vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
     serviceWorkerRegistration: registration,
   });
-
+  
+  console.log("Current VAPID key, messaging, registration ------ :",
+  import.meta.env.VITE_FIREBASE_VAPID_KEY, messaging, registration);
 
   if (!token) {
     return null;

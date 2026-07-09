@@ -1,27 +1,10 @@
-import { createRequire } from "module";
-import { cert, getApps, initializeApp } from "firebase-admin/app";
+// backend/utils/pushNotification.js
 import { getMessaging } from "firebase-admin/messaging";
+import { firebaseAdminApp } from "../config/adminFirebase.js"; // 🔥 Direct import of the clean instance
 import User from "../models/User.js";
 
-const require = createRequire(import.meta.url);
-
-const loadServiceAccount = () => {
-  const productionServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-  if (productionServiceAccount) {
-    return JSON.parse(productionServiceAccount);
-  }
-
-  return require("../config/firebase-service-account.json");
-};
-
-const firebaseApp = getApps().length
-  ? getApps()[0]
-  : initializeApp({
-      credential: cert(loadServiceAccount()),
-    });
-
-const messaging = getMessaging(firebaseApp);
+// Hook messaging directly into the already active app instance
+const messaging = getMessaging(firebaseAdminApp);
 
 const cleanupDeadTokens = async (deadTokens) => {
   const uniqueDeadTokens = [...new Set(deadTokens.filter(Boolean))];
@@ -108,4 +91,4 @@ export const sendPushNotification = async (
   return response;
 };
 
-export default firebaseApp;
+export default firebaseAdminApp;

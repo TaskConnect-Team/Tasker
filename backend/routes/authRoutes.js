@@ -9,7 +9,7 @@ router.post("/register", registerUser);
 router.post("/verify-otp", verifyOtp);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
-router.get("/me", protect, getCurrentUser);
+router.get("/verifyMe", protect, getCurrentUser);
 
 
 

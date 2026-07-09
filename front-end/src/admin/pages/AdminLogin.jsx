@@ -18,7 +18,7 @@ const AdminLogin = () => {
         const checkExistingAuth = async () => {
             try {
                 // Ping the verify route with credentials included
-               const response = await api.get('/admin/verify');
+               const response = await api.get('/admin/verifyAdmin');
 
                 // Axios only reaches here if status is 2xx (Success)
                 if (response.status === 200) {
@@ -57,26 +57,13 @@ const AdminLogin = () => {
         try {
             setLoading(true);
 
-            const response = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/api/admin/login`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData),
-                }
-            );
+            const response = await api.post('/admin/login', formData);
 
-            // const response = await api.post('/admin/login', formData);
-
-            if (!response.ok) {
+             if (!response.status || response.status !== 200) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Login failed");
             }
 
-            const data = await response.json();
-
-            console.log("Login successful:", data);
 
             // Redirect to dashboard
             setTimeout(() => {

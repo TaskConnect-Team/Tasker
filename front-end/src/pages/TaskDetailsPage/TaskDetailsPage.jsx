@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Clock,
@@ -13,6 +13,9 @@ import Button from '../../components/ui/Button';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { Map, APIProvider, Marker } from '@vis.gl/react-google-maps';
+import CustomerTrackerMap from '../../components/common/CustomerTrackerMap';
+import MapViewModel from '../../models/MapViewModel';
+import { useTaskTracking } from '../../context/TaskTrackingContext';
 
 function TaskDetailsPage() {
   const { taskId } = useParams();
@@ -23,18 +26,18 @@ function TaskDetailsPage() {
   const [updating, setUpdating] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
-  const fetchTask = async (isMountedRef) => {
+  const { startTracking, stopTracking } = useTaskTracking();
+
+  const fetchTask = useCallback(async (isMountedRef) => {
     try {
       const { data } = await api.get(`/tasks/${taskId}`);
-
-      console.log('Fetched task data:', data);
 
       if (isMountedRef.current) {
         setTask(data);
       }
-    } catch (error) {
+    } catch (fetchError) {
       if (isMountedRef.current) {
-        toast.error(error?.response?.data?.message || 'Failed to load task details');
+        toast.error(fetchError?.response?.data?.message || 'Failed to load task details');
         setTask(null);
       }
     } finally {
@@ -42,7 +45,7 @@ function TaskDetailsPage() {
         setLoading(false);
       }
     }
-  };
+  }, [taskId]);
 
   useEffect(() => {
     const isMountedRef = { current: true };
@@ -51,7 +54,7 @@ function TaskDetailsPage() {
     return () => {
       isMountedRef.current = false;
     };
-  }, [taskId]);
+  }, [fetchTask]);
 
   const taskStatus = task?.status ?? 'open';
   const statusLabel = useMemo(() => {
@@ -110,6 +113,10 @@ function TaskDetailsPage() {
   const showComplete =
     taskStatus === 'in-progress' && task?.tasker && task.tasker === user?.id;
   const showFinished = taskStatus === 'completed';
+  const destinationCoordinates = task?.geoLocation ? {
+    lat: task.geoLocation.coordinates?.[1],
+    lng: task.geoLocation.coordinates?.[0],
+  } : null;
 
   const handleStatusUpdate = async (nextStatus) => {
     if (!nextStatus) {
@@ -120,8 +127,16 @@ function TaskDetailsPage() {
     try {
       await api.patch(`/tasks/${taskId}/status`, { status: nextStatus });
       toast.success('Status updated');
+
+      // Control GPS Tracking based on the successful status shift
+      if (nextStatus === 'in-progress') {
+        startTracking(task); // Passes the local task state
+      } else if (nextStatus === 'completed' || nextStatus === 'cancelled') {
+        stopTracking();
+      } 
+
       await fetchTask({ current: true });
-    } catch (error) {
+    } catch {
       toast.error('Unable to update task status');
     } finally {
       setUpdating(false);
@@ -313,52 +328,9 @@ function TaskDetailsPage() {
         </motion.div>
         {/* 4. The Modal Overlay */}
         {isMapModalOpen && mapCenter && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-
-            {/* Modal Container */}
-            <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                <h3 className="text-lg font-semibold text-slate-800">Task Location</h3>
-                <button
-                  onClick={() => setIsMapModalOpen(false)}
-                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                >
-                  {/* Fallback to text 'X' if you don't have an icon library */}
-                  <span className="font-bold">✕</span>
-                </button>
-              </div>
-
-              {/* Map Container */}
-              <div className="w-full h-[60vh] min-h-[400px] bg-slate-50">
-                <Map
-                  defaultCenter={mapCenter}
-                  defaultZoom={15}
-                  mapId="TASK_DETAIL_MAP"
-                  gestureHandling="greedy" // Allows users to pan without holding Ctrl/Cmd
-                  disableDefaultUI={true}  // Keeps the UI clean
-                >
-                  {/* The Red Pin Marker */}
-                  <Marker position={mapCenter} />
-                </Map>
-              </div>
-
-              {/* Optional: Footer with actual directions link if they still want to drive there */}
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${mapCenter.lat},${mapCenter.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700 underline"
-                >
-                  Get Driving Directions ↗
-                </a>
-              </div>
-
-            </div>
-          </div>
+          <MapViewModel isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} mapCenter={mapCenter} />
         )}
+
       </div>
     </APIProvider>
   );

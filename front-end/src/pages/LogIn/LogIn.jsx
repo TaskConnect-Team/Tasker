@@ -13,7 +13,7 @@ export default function LogIn() {
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
-  const { user, setUser, loading: authLoading } = useAuth();
+  const { user, setUser, loading: authLoading, syncFirebaseAuthentication } = useAuth();
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -32,6 +32,10 @@ export default function LogIn() {
       });
 
       setUser(data.user);
+      const mongoUid = data.user?.id ?? data.user?._id;
+      if (mongoUid && data.firebaseToken) {
+        await syncFirebaseAuthentication(data.firebaseToken, mongoUid);
+      }
       toast.success(data.message || 'Login successful!');
       navigate(getDashboardHome(data.user.role), { replace: true });
     }

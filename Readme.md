@@ -11,7 +11,7 @@ TaskConnect is a **MERN-style local services marketplace** that connects custome
 > Add a product screenshot or demo GIF here.
 
 ```md
-![TaskConnect demo](./docs/demo.gif)
+![TaskConnect demo](./doc/dashboard.png)
 ```
 
 ## ✨ Features
@@ -151,6 +151,6 @@ docker compose up --build
 
 ## 👤 Author
 
-Maintainer: `Your Name`  
-Email: `your.email@example.com`  
-GitHub: `@your-github-username`
+Maintainer: `Hamza khan `  
+Email: `hamzakhan.cs25@example.com`  
+GitHub: `@hamzakhan-std25`

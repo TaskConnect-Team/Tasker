@@ -13,12 +13,9 @@ const PrivateAdminRoute = ({ children }) => {
 
     useEffect(() => {
         const verifyAdminToken = async () => {
-            console.log("verifying admin ....")
             try {
-                const response = await api.get('/admin/verify');
+                const response = await api.get('/admin/verifyAdmin');
                 setIsAuthenticated(response.status === 200);
-                console.log("verification success:", response);
-                console.log("isAuthenticated:", isAuthenticated);
             } catch (error) {
                 console.error("Token verification error:", error);
                 setIsAuthenticated(false);

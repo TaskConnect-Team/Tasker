@@ -14,7 +14,7 @@ export default function OtpVerification({ email, onBack }) {
   const [verified, setVerified] = useState(false);
 
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser, syncFirebaseAuthentication } = useAuth();
 
   const handleVerify = async (event) => {
     event.preventDefault();
@@ -37,6 +37,11 @@ export default function OtpVerification({ email, onBack }) {
 
       if (data.token) {
         localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      }
+
+      const mongoUid = data.user?.id ?? data.user?._id;
+      if (mongoUid && data.firebaseToken) {
+        await syncFirebaseAuthentication(data.firebaseToken, mongoUid);
       }
 
       toast.success('Account Verified!');
