@@ -2,19 +2,15 @@ import 'dotenv/config';
 import dns from 'dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 import cookieParser from 'cookie-parser';
-// import dotenv from "dotenv";
-// dotenv.config();
 
 import taskRoutes from "./routes/taskRoutes.js";
 import express from "express";
 import stripeWebhookRoutes from "./routes/stripeWebhookRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 
-// const mongoose = require("mongoose");
-// const cors = require("cors");
 import cors from "cors";
 import connectDB from "./config/db.js";
-import {createSpatialIndex} from "./config/db.js";
+// import {createSpatialIndex} from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
@@ -59,8 +55,6 @@ app.use(
     credentials: true,
   })
 );
-
-// console.log('✅ CORS allowed origins:', allowedOrigins);
 
 app.use(
   "/api/stripe",

@@ -5,6 +5,8 @@ const mockTaskCreate = jest.fn();
 const mockTaskFind = jest.fn();
 const mockTaskFindById = jest.fn();
 const mockTaskAggregate = jest.fn();
+const mockUserFindById = jest.fn();
+const mockSendPushNotification = jest.fn();
 jest.unstable_mockModule("../../models/Task.js", () => ({
   default: {
     create: mockTaskCreate,
@@ -15,7 +17,13 @@ jest.unstable_mockModule("../../models/Task.js", () => ({
 }));
 
 jest.unstable_mockModule("../../models/User.js", () => ({
-  default: {},
+  default: {
+    findById: mockUserFindById,
+  },
+}));
+
+jest.unstable_mockModule("../../utils/pushNotification.js", () => ({
+  sendPushNotification: mockSendPushNotification,
 }));
 
 jest.unstable_mockModule("../../utils/notificationService.js", () => ({
@@ -29,6 +37,7 @@ const {
   getTasks,
   getTaskById,
   acceptTask,
+  startTask,
   updateTaskStatus,
   cancelTask,
   searchTasks,
@@ -171,6 +180,35 @@ describe("taskController", () => {
       expect(task.save).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ message: "Task accepted successfully" }),
+      );
+    });
+  });
+
+  // ── startTask ─────────────────────────────────────────────────────
+  describe("startTask", () => {
+    it("starts an assigned task for the owning tasker and notifies the customer", async () => {
+      const task = {
+        _id: "t1",
+        status: "assigned",
+        tasker: { toString: () => "u1" },
+        customer: "c1",
+        save: jest.fn(),
+        toObject() { return { ...this }; },
+      };
+
+      mockTaskFindById.mockResolvedValue(task);
+      mockUserFindById.mockReturnValue({ select: jest.fn().mockResolvedValue({ fcmTokens: ["tok1"] }) });
+      mockSendPushNotification.mockResolvedValue({ successCount: 1 });
+
+      const req = { params: { id: "t1" }, user: { _id: { toString: () => "u1" }, name: "Alice" } };
+      const res = buildRes();
+      await startTask(req, res);
+
+      expect(task.status).toBe("in-progress");
+      expect(task.save).toHaveBeenCalled();
+      expect(mockSendPushNotification).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Task started successfully" }),
       );
     });
   });

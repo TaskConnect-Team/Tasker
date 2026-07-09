@@ -1,9 +1,15 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
-import { onForegroundMessage, removeCurrentFcmToken, requestNotificationPermission } from '../utils/fcm';
+import { onForegroundMessage, requestNotificationPermission } from '../utils/fcm';
+import { signInWithCustomToken, signOut as firebaseSignOut } from "firebase/auth";
+import { auth as firebaseAuth } from "../config/firebase";
+import { db } from "../config/firebase"; // Import your initialized Firestore instance
+import { doc, onSnapshot, terminate, } from "firebase/firestore";
+import { getDatabase, ref, onValue } from "firebase/database";
+
+
 
 const AuthContext = createContext();
-
 const AUTH_STORAGE_KEY = 'tasker_auth_user';
 const LEGACY_TOKEN_KEY = 'token';
 
@@ -51,7 +57,38 @@ const readCachedUser = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFirebaseAuthenticated, setIsFirebaseAuthenticated] = useState(false);
   const notificationRequestRef = useRef(false);
+
+
+
+  const syncFirebaseAuthentication = async (firebaseToken, mongoUid) => {
+
+    if (!firebaseToken || !mongoUid) return;
+    // console.log("sync firebase : ", firebaseToken, mongoUid)
+
+    const currentFirebaseUser = firebaseAuth.currentUser;
+
+    // If already connected as this exact user, skip the handshake overhead
+    if (currentFirebaseUser && currentFirebaseUser.uid === mongoUid.toString()) {
+      console.log("🔄 Firebase session already active. Skipping re-auth.");
+      setIsFirebaseAuthenticated(true);
+      return;
+    }
+
+    // If user identities swapped, clean up the previous session channel first
+    if (currentFirebaseUser && currentFirebaseUser.uid !== mongoUid.toString()) {
+      await firebaseSignOut(firebaseAuth);
+    }
+
+    try {
+      await signInWithCustomToken(firebaseAuth, firebaseToken);
+      setIsFirebaseAuthenticated(true);
+      console.log("🔒 Frontend securely connected to Firestore.");
+    } catch (error) {
+      console.error("❌ Firebase custom authentication handshake failed:", error);
+    }
+  };
 
   const persistUser = (nextUser) => {
     const safeUser = normalizeUser(nextUser);
@@ -71,6 +108,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // await removeCurrentFcmToken();
       await api.post('/auth/logout');
+      await firebaseSignOut(firebaseAuth);
 
     } catch (error) {
       if (error?.response?.status !== 401) {
@@ -78,6 +116,7 @@ export const AuthProvider = ({ children }) => {
       }
     } finally {
       persistUser(null);
+      setIsFirebaseAuthenticated(false);
       localStorage.removeItem(LEGACY_TOKEN_KEY);
     }
   };
@@ -87,7 +126,7 @@ export const AuthProvider = ({ children }) => {
     if (!updates) {
       return;
     }
-    
+
 
     persistUser({
       ...user,
@@ -99,7 +138,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(LEGACY_TOKEN_KEY);
 
     let mounted = true;
-
     const syncUser = async () => {
       try {
         const { data } = await api.get('/auth/verifyMe');
@@ -110,6 +148,8 @@ export const AuthProvider = ({ children }) => {
         }
 
         persistUser(data.user);
+        await syncFirebaseAuthentication(data.firebaseToken, data.user.id);
+
       } catch (error) {
         if (!mounted) {
           return;
@@ -158,6 +198,8 @@ export const AuthProvider = ({ children }) => {
 
   }, []); // Run only once on mount
 
+
+
   useEffect(() => {
     if (!user?.id || !navigator.onLine) {
       return;
@@ -185,17 +227,16 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-
   return (
-    <AuthContext.Provider value={{ user, setUser: persistUser, updateUser, logout, loading, refreshUser: () => api.get('/auth/me').then(({ data }) => persistUser(data.user)).catch(() => null) }}>
+    <AuthContext.Provider value={{ user, setUser: persistUser, updateUser, logout, loading, syncFirebaseAuthentication, refreshUser: () => api.get('/auth/me').then(({ data }) => persistUser(data.user)).catch(() => null) }}>
       {/* Do not render children until check is done to avoid "flash" of login page */}
       {!loading ? children :
-      
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        {/* Tailwind Spinner */}
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-        <p className="text-gray-600 font-medium animate-pulse">Checking your session...</p>
-      </div>
+
+        <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+          {/* Tailwind Spinner */}
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium animate-pulse">Checking your session...</p>
+        </div>
       }
     </AuthContext.Provider>
   );

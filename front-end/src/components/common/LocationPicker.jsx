@@ -85,15 +85,17 @@ function LocationPickerMap({ onLocationSelect, city }) {
     const lat = event.latLng?.lat();
     const lng = event.latLng?.lng();
 
+    console.log("handle drag end :", lat, lng);
+    
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return;
     }
 
     // Keep the map and parent form in sync whenever the marker is repositioned.
     const nextPosition = { lat, lng };
-    setMapCenter(nextPosition);
+    // setMapCenter(nextPosition);
     setMarkerPosition(nextPosition);
-    setMapZoom(DEFAULT_ZOOM);
+    // setMapZoom(DEFAULT_ZOOM);
     setStatusMessage('Location updated. You can keep dragging the pin if needed.');
     onLocationSelect?.(nextPosition);
   };
@@ -120,8 +122,6 @@ function LocationPickerMap({ onLocationSelect, city }) {
             mapId={MAP_ID}
             defaultCenter={mapCenter}
             defaultZoom={mapZoom}
-            center={mapCenter}
-            zoom={mapZoom}
             gestureHandling="greedy"
             disableDefaultUI
             className="h-full w-full"

@@ -17,7 +17,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: false,
+        enabled: true,
         type: 'classic',
       },
       workbox: {
