@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { buildCookieOptions, buildClearCookieOptions } from "../utils/cookie.js";
+import admin from "../config/adminFirebase.js";
 
 const ADMIN_COOKIE_NAME = "adminToken";
 const ADMIN_COOKIE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours

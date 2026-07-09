@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AdvancedMarker, APIProvider, Map, useApiIsLoaded } from '@vis.gl/react-google-maps';
 import { LoaderCircle, MapPin, Navigation } from 'lucide-react';
 import { CITY_COORDINATES } from '../../constants/cityCoordinates';
+import { useMap } from '@vis.gl/react-google-maps';
 
 const DEFAULT_CENTER = { lat: 33.6844, lng: 73.0479 };
 const DEFAULT_ZOOM = 15;
@@ -12,14 +13,19 @@ const formatCoordinate = (value) => (Number.isFinite(value) ? value.toFixed(5) :
 
 function LocationPickerMap({ onLocationSelect, city }) {
   const apiLoaded = useApiIsLoaded();
+  const map = useMap();
+
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [mapZoom, setMapZoom] = useState(DEFAULT_ZOOM);
-  const [markerPosition, setMarkerPosition] = useState(DEFAULT_CENTER);
+  const [resolvingLocation, setResolvingLocation] = useState(!city);
+
+  const initialCenter = city && CITY_COORDINATES[city] ? CITY_COORDINATES[city] : DEFAULT_CENTER;
+
+  const [markerPosition, setMarkerPosition] = useState(initialCenter);
   const [statusMessage, setStatusMessage] = useState('Loading map...');
-  const [resolvingLocation, setResolvingLocation] = useState(true);
 
   useEffect(() => {
-    if (!city) {
+    if (!city || !map) {
       return;
     }
 
@@ -28,14 +34,24 @@ function LocationPickerMap({ onLocationSelect, city }) {
     if (!nextCenter) {
       return;
     }
+    map.panTo(nextCenter);
+    map.setZoom(DEFAULT_ZOOM);
 
-    setMapCenter(nextCenter);
+
     setMarkerPosition(nextCenter);
-    setMapZoom(12);
     setStatusMessage(`Centered on ${city}. Drag the marker to fine-tune the location.`);
-  }, [city]);
+
+    onLocationSelect?.(nextCenter);
+
+  }, [city, map]);
 
   useEffect(() => {
+
+    if (city) {
+      setResolvingLocation(false);
+      return; // Abort GPS lookup if they already picked a city
+    }
+
     let isCancelled = false;
 
     // Resolve the user's location once, then seed both the map center and marker position.
@@ -44,16 +60,14 @@ function LocationPickerMap({ onLocationSelect, city }) {
         return;
       }
 
-      setMapCenter(nextCenter);
       setMarkerPosition(nextCenter);
-      setMapZoom(DEFAULT_ZOOM);
       setStatusMessage(message);
       setResolvingLocation(false);
       onLocationSelect?.(nextCenter);
     };
 
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      publishLocation(DEFAULT_CENTER, 'Geolocation is unavailable. Using the default map center.');
+      publishLocation(DEFAULT_CENTER, 'Geolocation is unavailable. ');
       return () => {
         isCancelled = true;
       };
@@ -67,7 +81,7 @@ function LocationPickerMap({ onLocationSelect, city }) {
         );
       },
       () => {
-        publishLocation(DEFAULT_CENTER, 'Location permission was denied. Using the default map center.');
+        publishLocation(DEFAULT_CENTER, 'Location permission was denied.');
       },
       {
         enableHighAccuracy: true,
@@ -79,23 +93,18 @@ function LocationPickerMap({ onLocationSelect, city }) {
     return () => {
       isCancelled = true;
     };
-  }, [onLocationSelect]);
+  }, [city, map]);
 
   const handleDragEnd = (event) => {
     const lat = event.latLng?.lat();
     const lng = event.latLng?.lng();
 
-    console.log("handle drag end :", lat, lng);
-    
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return;
     }
 
-    // Keep the map and parent form in sync whenever the marker is repositioned.
     const nextPosition = { lat, lng };
-    // setMapCenter(nextPosition);
     setMarkerPosition(nextPosition);
-    // setMapZoom(DEFAULT_ZOOM);
     setStatusMessage('Location updated. You can keep dragging the pin if needed.');
     onLocationSelect?.(nextPosition);
   };
@@ -120,7 +129,7 @@ function LocationPickerMap({ onLocationSelect, city }) {
         <div className="relative h-[360px] w-full">
           <Map
             mapId={MAP_ID}
-            defaultCenter={mapCenter}
+            defaultCenter={initialCenter}
             defaultZoom={mapZoom}
             gestureHandling="greedy"
             disableDefaultUI
@@ -131,7 +140,8 @@ function LocationPickerMap({ onLocationSelect, city }) {
               draggable
               title="Selected location"
               onDragEnd={handleDragEnd}
-            />
+            >
+            </AdvancedMarker>
           </Map>
 
           {resolvingLocation && (

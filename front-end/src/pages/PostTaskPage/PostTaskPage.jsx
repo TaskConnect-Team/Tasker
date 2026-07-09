@@ -95,11 +95,9 @@ const PostTaskPage = () => {
         lng: taskLocation?.lng,
       };
 
-      console.log("submitting task with data : ", taskData)
 
       const response = await api.post('/tasks', taskData);
       toast.success('Task posted successfully!');
-      console.log("task created : ", response)
       navigate(`/tasks/${response.data._id}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to post task');
@@ -253,15 +251,6 @@ const PostTaskPage = () => {
 
                 <div className="sm:col-span-1">
                   <div className="relative">
-                    {/* <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" /> */}
-                    {/* <input
-                    required
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="e.g., Swabi"
-                    className="w-full rounded-xl border border-slate-200 pl-10 pr-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                  /> */}
 
                     <SingleAutoCompleteSelect
                       label="City"
