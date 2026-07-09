@@ -1,0 +1,118 @@
+import mongoose from "mongoose";
+
+const taskSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      required: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    locationLabel: {
+      type: String,
+      default: "",
+    },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude] -> NOTE THE ORDER!
+        required: true,
+      },
+    },
+
+    urgency: {
+      type: String,
+      enum: ["normal", "urgent"],
+      default: "normal",
+    },
+
+    category: {
+      type: [String],
+      trim: true,
+      default: "",
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "open",
+        "assigned",
+        "in-progress",
+        "completed",
+        "reviewed",
+        "cancelled",
+        "paid",
+      ],
+      default: "open",
+    },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    review: {
+      type: String,
+      trim: true,
+    },
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    paidAt: Date,
+    finalPrice: Number,
+
+    paymentIntentId: String,
+    paymentStatus: {
+      type: String,
+      enum: ["none", "pending", "paid", "failed"],
+      default: "none",
+    },
+    platformFee: Number,
+    taskerEarning: Number,
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    tasker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    scheduledAt: {
+      type: Date,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
+taskSchema.index({ location: "2dsphere" });
+
+const Task = mongoose.model("Task", taskSchema);
+
+export default Task;
