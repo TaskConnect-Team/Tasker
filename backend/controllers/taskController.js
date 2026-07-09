@@ -6,6 +6,7 @@ import {
   notifyTaskCustomer,
   notifyTasker,
 } from "../utils/notificationService.js";
+import { sendPushNotification } from "../utils/pushNotification.js";
 import { buildPointFromCoordinates } from "../utils/geo.js";
 import { normalizeList } from "../utils/normalize.js";
 
@@ -426,10 +427,10 @@ export const updateTaskStatus = async (req, res) => {
 
 /**
  * @desc    Get tasks created by logged-in customer
- * @route   GET /api/tasks/my
+ * @route   GET /api/tasks/myTasks
  * @access  Customer
  */
-export const getMyTasks = async (req, res) => {
+export const myTasks = async (req, res) => {
   try {
     const tasks = await Task.find({ customer: req.user._id }).sort({
       createdAt: -1,
@@ -532,6 +533,24 @@ export const startTask = async (req, res) => {
 
     task.status = "in-progress";
     await task.save();
+
+    const customer = await User.findById(task.customer).select("fcmTokens");
+
+    if (customer && Array.isArray(customer.fcmTokens) && customer.fcmTokens.length) {
+      queueNotification(
+        sendPushNotification(
+          customer.fcmTokens,
+          "Tasker en route",
+          `${req.user.name || "Your tasker"} is on the way to your task.`,
+          {
+            type: "task.started",
+            taskId: task._id.toString(),
+            taskerId: req.user._id.toString(),
+          },
+          { link: `/tasks/${task._id.toString()}` },
+        ),
+      );
+    }
 
     queueNotification(
       notifyTaskCustomer(

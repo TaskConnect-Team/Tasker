@@ -35,9 +35,9 @@ router.post("/logout", isAdmin, adminLogout);
 
 /**
  * Verify admin token
- * GET /api/admin/verify
+ * GET /api/admin/verifyAdmin
  */
-router.get("/verify", isAdmin, verifyAdmin);
+router.get("/verifyAdmin", isAdmin, verifyAdmin);
 // router.get("/verify", (req, res) => {
 //     console.log("admin verify call ....")
 //     res.status(200).json({ message: "Admin verify endpoint is working" });

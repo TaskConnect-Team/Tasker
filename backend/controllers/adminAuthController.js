@@ -47,7 +47,12 @@ export const adminLogin = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: "24h" }
         );
-        
+
+        // We use a sanitized version of the admin email as a unique Firebase UID
+        const firebaseUid = `admin_${adminEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
+        const firebaseToken = await admin.auth().createCustomToken(firebaseUid);
+
+
         // Set secure cookie
         res.cookie(ADMIN_COOKIE_NAME, token, buildCookieOptions(ADMIN_COOKIE_MAX_AGE));
 
@@ -57,6 +62,7 @@ export const adminLogin = async (req, res) => {
                 email: adminEmail,
                 role: "admin",
             },
+            firebaseToken: firebaseToken    
         });
     } catch (error) {
         console.error("Admin login error:", error);

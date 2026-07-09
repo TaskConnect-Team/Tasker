@@ -89,10 +89,11 @@ function TaskerFeed() {
               return (
                 <div
                   key={task._id}
-                  type="button"
-                  onClick={() => navigate(`/tasks/${task._id}`)}
+                  // type="button"
+                  // onClick={() => navigate(`/tasks/${task._id}`)}
                   className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-lg hover:scale-105 transition-all"
                 >
+
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-base font-semibold text-slate-900">{task.title}</h3>
