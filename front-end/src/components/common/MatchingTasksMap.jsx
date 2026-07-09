@@ -4,7 +4,7 @@ import { LoaderCircle, MapPin, Navigation } from 'lucide-react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
-const DEFAULT_CENTER = { lat: 33.6844, lng: 73.0479 };
+const DEFAULT_CENTER = { lat:  34.12755, lng: 72.47434 };
 const DEFAULT_ZOOM = 13;
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -135,7 +135,6 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
       setFetchError('');
 
       try {
-        console.log("resolved skills : ", resolvedSkills);
         const { data } = await api.get('/tasks/matching-nearby', {
           params: {
             latitude: resolvedCenter.lat,
@@ -206,15 +205,13 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
         <div className="relative h-[540px] w-full">
           <Map
             mapId="MATCHING_TASKS_MAP"
-            center={resolvedCenter}
             defaultCenter={resolvedCenter}
-            zoom={DEFAULT_ZOOM}
+            defaultZoom={DEFAULT_ZOOM}
             gestureHandling="greedy"
             disableDefaultUI
             className="h-full w-full"
           >
             <AdvancedMarker position={resolvedCenter} title="Your location">
-              <MarkerDot className="text-blue-500" />
             </AdvancedMarker>
 
             {visibleTasks.map((task) => {
@@ -231,7 +228,7 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
                   title={task.title}
                   onClick={() => setSelectedTaskId(task.id)}
                 >
-                  <MarkerDot className="text-rose-500" />
+                  <MarkerDot className="text-blue-500" />
                 </AdvancedMarker>
               );
             })}

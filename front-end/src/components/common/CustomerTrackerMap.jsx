@@ -99,7 +99,7 @@ const LiveTaskerMarker = ({ isStale, heading }) => (
 );
 
 // 2. The Destination Marker (Static Pin)
-const DestinationMarker = () => (
+export const DestinationMarker = () => (
     <div className="relative flex items-center justify-center pb-8 drop-shadow-xl hover:scale-110 transition-transform cursor-pointer">
         <svg className="w-10 h-10 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
             {/* Classic Map Pin */}
@@ -299,7 +299,7 @@ function CustomerTrackerMapInner({ taskId, destinationCoordinates }) {
                     >
                         {destination && (
                             <AdvancedMarker position={destination} title="Destination">
-                                {/* <DestinationMarker /> */}
+                                <DestinationMarker />
                             </AdvancedMarker>
                         )}
 
