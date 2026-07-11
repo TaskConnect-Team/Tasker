@@ -6,7 +6,6 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
       required: true,
-      unique: true,
     },
     customer: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,9 +29,23 @@ const reviewSchema = new mongoose.Schema(
       default: "",
     },
     tags: [{ type: String, trim: true }],
+    embedding: {
+      type: [Number],
+      select: false,
+    },
+    embeddedAt: {
+      type: Date,
+      default: null,
+    },
+
   },
   { timestamps: true }
 );
+
+
+// Indexes
+reviewSchema.index({ task: 1 }, { unique: true });
+reviewSchema.index({ tasker: 1, rating: -1 });
 
 const Review = mongoose.model("Review", reviewSchema);
 

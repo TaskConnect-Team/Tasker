@@ -205,7 +205,7 @@ function OrdersPage() {
             filteredTasks.map((task) => (
               <div
                 key={task._id}
-                className="flex gap-4 rounded-2xl border border-slate-200 hover:shadow-lg hover:scale-105 transition-all bg-white p-6 shadow-sm md:flex-row items-center justify-between"
+                className="flex gap-4 rounded-2xl border border-slate-200 hover:shadow-lg transition-all bg-white p-6 shadow-sm md:flex-row items-center justify-between"
               >
                 <div className="flex flex-col items-center gap-4">
                   <div>
@@ -215,7 +215,7 @@ function OrdersPage() {
                       <span className="rounded-full border border-slate-200 px-2 py-0.5">
                         {statusLabel[task.status] ?? task.status}
                       </span>
-                      <span>${task.price}</span>
+                      <span>Rs. {task.price}</span>
                     </div>
                   </div>
 

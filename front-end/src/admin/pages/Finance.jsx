@@ -40,7 +40,7 @@ const Finance = () => {
 
   const handleProcessPayout = async (taskerId, taskerName, amount) => {
     const confirmed = window.confirm(
-      `Process payout of $${amount.toLocaleString()} to ${taskerName}?`
+      `Process payout of Rs. ${amount.toLocaleString()} to ${taskerName}?`
     );
 
     if (!confirmed) return;
@@ -69,7 +69,7 @@ const Finance = () => {
       // Update total balance
       setTotalBalance((prev) => Math.max(0, prev - amount));
 
-      alert(`✅ Payout processed! $${amount.toLocaleString()} sent to ${taskerName}`);
+      alert(`✅ Payout processed! Rs. ${amount.toLocaleString()} sent to ${taskerName}`);
     } catch (error) {
       console.error("Process payout error:", error);
       alert("❌ Error processing payout");
@@ -127,7 +127,7 @@ const Finance = () => {
               <div>
                 <p className="text-sm font-medium text-blue-900">Total Pending Payouts</p>
                 <p className="text-3xl font-bold text-blue-600 mt-2">
-                  ${totalBalance.toLocaleString()}
+                  Rs. {totalBalance.toLocaleString()}
                 </p>
               </div>
               <DollarSign className="text-blue-600" size={32} />
@@ -151,7 +151,7 @@ const Finance = () => {
               <div>
                 <p className="text-sm font-medium text-purple-900">Avg Payout Amount</p>
                 <p className="text-3xl font-bold text-purple-600 mt-2">
-                  $
+                  Rs. 
                   {payoutPipeline.length > 0
                     ? (totalBalance / payoutPipeline.length).toLocaleString(undefined, {
                         maximumFractionDigits: 0,
@@ -215,7 +215,7 @@ const Finance = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center gap-1 bg-green-50 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                          ${tasker.balance.toLocaleString()}
+                          Rs. {tasker.balance.toLocaleString()}
                         </span>
                       </td>
                       <td className="px-6 py-4">

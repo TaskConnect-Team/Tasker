@@ -119,7 +119,7 @@ const AdminLayout = ({ children }) => {
                             >
                               <p className="font-medium text-gray-900">{task.title}</p>
                               <p className="text-sm text-gray-500">
-                                ${task.price} · {task.status}
+                                Rs. {task.price} · {task.status}
                               </p>
                               <span
                                 className={`inline-block mt-1 text-xs px-2 py-1 rounded-full ${

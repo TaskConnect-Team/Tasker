@@ -87,13 +87,13 @@ const Dashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <KPICard
                             title="Platform Revenue"
-                            value={`$${kpis?.platformRevenue?.toLocaleString() || 0}`}
+                            value={`Rs. ${kpis?.platformRevenue?.toLocaleString() || 0}`}
                             icon={DollarSign}
                             color="green"
                         />
                         <KPICard
                             title="Escrow Balance"
-                            value={`$${kpis?.escrowTracker?.toLocaleString() || 0}`}
+                            value={`Rs. ${kpis?.escrowTracker?.toLocaleString() || 0}`}
                             icon={TrendingUp}
                             color="blue"
                         />
@@ -187,13 +187,13 @@ const Dashboard = () => {
                         <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
                             <p className="text-sm font-medium text-blue-900">Total Platform Revenue</p>
                             <p className="text-3xl font-bold text-blue-600 mt-2">
-                                ${kpis?.platformRevenue?.toLocaleString() || 0}
+                                Rs. {kpis?.platformRevenue?.toLocaleString() || 0}
                             </p>
                         </div>
                         <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
                             <p className="text-sm font-medium text-orange-900">Current Escrow</p>
                             <p className="text-3xl font-bold text-orange-600 mt-2">
-                                ${kpis?.escrowTracker?.toLocaleString() || 0}
+                                Rs. {kpis?.escrowTracker?.toLocaleString() || 0}
                             </p>
                         </div>
                         <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">

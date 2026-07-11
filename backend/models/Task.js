@@ -53,6 +53,12 @@ const taskSchema = new mongoose.Schema(
       default: "",
     },
 
+    tags: {
+      type: [String],
+      trim: true,
+      default: "",
+    },
+
     status: {
       type: String,
       enum: [
@@ -105,13 +111,26 @@ const taskSchema = new mongoose.Schema(
     scheduledAt: {
       type: Date,
     },
+
+    embedding: {
+      type: [Number],
+      select: false,
+    },
+    embeddedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-taskSchema.index({ location: "2dsphere" });
+// Indexes
+taskSchema.index({ location: '2dsphere' });
+taskSchema.index({ status: 1, createdAt: -1 });
+taskSchema.index({ customer: 1, status: 1 });
+taskSchema.index({ tasker: 1, status: 1 });
 
 const Task = mongoose.model("Task", taskSchema);
 

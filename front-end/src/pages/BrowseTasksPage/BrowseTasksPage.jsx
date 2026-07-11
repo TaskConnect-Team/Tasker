@@ -7,6 +7,9 @@ import BrowseTopBar from '../../components/layout/BrowseTopBar';
 import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
 import SkeletonCard from '../../components/common/SkeletonCard';
 import MobileFilterSheet from '../../components/common/MobileFilterSheet';
+import SearchModeToggle from '../../components/ai/SearchModeToggle';
+import MatchScoreBadge from '../../components/ai/MatchScoreBadge';
+import SearchSourceIndicator from '../../components/ai/SearchSourceIndicator';
 import { SHARED_SKILLS } from '../../constants/skills';
 
 
@@ -116,6 +119,8 @@ function BrowseTasksPage() {
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState([]);
+  const [searchMode, setSearchMode] = useState(searchParams.get('mode') || 'ai');
+  const [searchSource, setSearchSource] = useState(null);
   const searchInputRef = useRef(null);
 
   const filters = useMemo(
@@ -160,9 +165,34 @@ function BrowseTasksPage() {
     const fetchTasks = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get('/tasks/search', { params: filters });
+        const hasSearchTerms = Boolean(filters.q || filters.category);
+        let taskResults = [];
+
+
+        if (!filters.q.trim()) {
+          setTasks([]);
+          return;
+        }
+
+        if (searchMode === 'ai' && hasSearchTerms) {
+          try {
+            const { data } = await api.get('/ai/tasks/search', { params: filters });
+            taskResults = data?.data || [];
+            setSearchSource(data?.sources?.vector ? 'vector' : 'text');
+          } catch (error) {
+            toast.error('AI task search is unavailable. Using standard search.');
+            const { data } = await api.get('/tasks/search', { params: filters });
+            taskResults = data;
+            setSearchSource('text');
+          }
+        } else {
+          const { data } = await api.get('/tasks/search', { params: filters });
+          taskResults = data;
+          setSearchSource('text');
+        }
+
         if (mounted) {
-          setTasks(data);
+          setTasks(taskResults);
         }
       } catch (error) {
         if (mounted) {
@@ -181,7 +211,7 @@ function BrowseTasksPage() {
     return () => {
       mounted = false;
     };
-  }, [filters]);
+  }, [filters, searchMode]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -202,6 +232,9 @@ function BrowseTasksPage() {
         params.category = filterCategory.join(',');
       }
     });
+    if (searchMode) {
+      params.mode = searchMode;
+    }
     setSearchParams(params);
     setIsFilterOpen(false);
   };
@@ -210,6 +243,7 @@ function BrowseTasksPage() {
     setFormState(defaultFilters);
     setIsFilterOpen(false);
     setFilterCategory([]);
+    setSearchSource(null);
     setSearchParams({ status: 'open' });
   };
 
@@ -224,11 +258,15 @@ function BrowseTasksPage() {
           setIsFilterOpen={setIsFilterOpen}
           searchInputRef={searchInputRef}
           placeholder="Search for tasks..."
+          aiActive={searchMode === 'ai'}
+          isSearching={loading}
         />
 
         <div className="mt-[60px] flex flex-col gap-6 lg:flex-row">
           {/* 1. Task List */}
           <section className="flex-1 space-y-4">
+            <SearchModeToggle mode={searchMode} setMode={setSearchMode} isLoading={loading} />
+            <SearchSourceIndicator source={searchSource} count={tasks.length} isLoading={loading} />
             {loading ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, index) => (
@@ -244,12 +282,20 @@ function BrowseTasksPage() {
                     onClick={() => navigate(`/tasks/${task._id}`)}
                     className="text-left"
                   >
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:scale-105 cursor-pointer">
-                      <div className="flex items-center justify-between">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-lg cursor-pointer">
+                      <div className="flex items-start justify-between gap-3">
                         <h3 className="text-base font-semibold text-slate-900">{task.title}</h3>
-                        <span className="text-sm font-semibold text-slate-900">${task.price}</span>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <span className="text-sm font-semibold text-slate-900">Rs. {task.price}</span>
+                          {searchMode === 'ai' && <MatchScoreBadge score={task.score || task.matchScore} />}
+                        </div>
                       </div>
                       <p className="mt-2 text-sm text-slate-600 line-clamp-2">{task.description}</p>
+                      {searchMode === 'ai' && (
+                        <span className="mt-3 inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                          AI relevance: {task.category?.[0] || 'best fit'}
+                        </span>
+                      )}
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                         <MapPin className="h-3 w-3" />
                         {task.location}
@@ -263,7 +309,7 @@ function BrowseTasksPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-                No tasks matched your filters.
+                No tasks matched! Update your search or filters.
               </div>
             )}
           </section>

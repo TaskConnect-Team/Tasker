@@ -299,7 +299,6 @@ function CustomerTrackerMapInner({ taskId, destinationCoordinates }) {
                     >
                         {destination && (
                             <AdvancedMarker position={destination} title="Destination">
-                                <DestinationMarker />
                             </AdvancedMarker>
                         )}
 

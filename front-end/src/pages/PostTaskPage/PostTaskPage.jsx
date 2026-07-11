@@ -5,6 +5,7 @@ import {
   DollarSign,
   Calendar,
   Send,
+  Sparkles,
   Tag,
   MapPinCheck
 } from 'lucide-react';
@@ -15,6 +16,8 @@ import { SHARED_SKILLS } from '../../constants/skills';
 import { PAKISTAN_CITIES } from '../../constants/cities';
 import LocationPicker from '../../components/common/LocationPicker';
 import SingleAutoCompleteSelect from '../../components/ui/SingleAutoCompleteSelect';
+import AIEnhancementModal from '../../components/common/AIEnhancementModal';
+import PriceSuggestion from '../../components/common/PriceSuggestion';
 
 const padDatePart = (value) => String(value).padStart(2, '0');
 
@@ -42,6 +45,9 @@ const PostTaskPage = () => {
   const [city, setCity] = useState('');
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedHour, setSelectedHour] = useState(null);
+  const [showAIEnhancement, setShowAIEnhancement] = useState(false);
+  const [showPriceSuggestion, setShowPriceSuggestion] = useState(false);
+  const [aiSuggestedTags, setAiSuggestedTags] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -91,10 +97,10 @@ const PostTaskPage = () => {
         city: city,
         price: Number(formData.price),
         category: requiredSkills,
+        tags: aiSuggestedTags || [],
         lat: taskLocation?.lat,
         lng: taskLocation?.lng,
       };
-
 
       const response = await api.post('/tasks', taskData);
       toast.success('Task posted successfully!');
@@ -106,6 +112,71 @@ const PostTaskPage = () => {
     }
   };
 
+  const openAIEnhancement = () => {
+    if (formData.title.trim().length < 3 ) {
+      toast.error('Title Needed at least 3 words!');
+      return;
+    }
+
+    if (formData.description.trim().length < 10 ) {
+      toast.error('Description Needed at least 10 words!');
+      return;
+    }
+
+    if (!requiredSkills.length) {
+      toast.error('Skill Needed at least 1 skill!');
+
+      return;
+    }
+
+    setShowAIEnhancement(true);
+  };
+
+  const openPriceSuggestion = () => {
+    if (!city ) {
+      toast.error('City is required to estimate!');
+      return;
+    }
+    if ( !requiredSkills.length ) {
+      toast.error('Category is required to estimate!');
+      return;
+    }
+    if ( formData.description.trim().length < 10) {
+      toast.error('Description is required to estimate!');
+      return;
+    }
+
+    setShowPriceSuggestion(true);
+  };
+
+  const handleAIEnhance = (data) => {
+    const tags = data?.tags || [];
+
+    setFormData((prev) => ({
+      ...prev,
+      description: data?.enhancedDescription || prev.description,
+    }));
+    setAiSuggestedTags(tags);
+    toast.success('Description enhanced with AI!');
+  };
+
+  const handlePriceSuggestion = (data) => {
+    setFormData((prev) => ({
+      ...prev,
+      price: String(data?.suggestedPrice || prev.price),
+    }));
+    toast.success('Market estimate applied!');
+  };
+
+  const acceptSuggestedTag = (tag) => {
+    setRequiredSkills((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
+    setAiSuggestedTags((prev) => prev.filter((item) => item !== tag));
+  };
+
+  const rejectSuggestedTag = (tag) => {
+    setAiSuggestedTags((prev) => prev.filter((item) => item !== tag));
+  };
+
   return (
     <div className="">
       <div className=" max-w-2xl ">
@@ -115,7 +186,7 @@ const PostTaskPage = () => {
           <p className="mt-2 text-slate-600">Describe what you need help with and find the right tasker.</p>
         </div>
 
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {/* Section 1: Core Details */}
           <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
             <div className="mb-4 flex items-center gap-2 font-semibold text-slate-800">
@@ -137,7 +208,18 @@ const PostTaskPage = () => {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Detailed Description</label>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <label className="block text-sm font-medium text-slate-700">Detailed Description</label>
+                  <button
+                    type="button"
+                    onClick={openAIEnhancement}
+                    className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                    aria-label="Enhance task description with AI"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Enhance with AI
+                  </button>
+                </div>
                 <textarea
                   required
                   name="description"
@@ -150,6 +232,38 @@ const PostTaskPage = () => {
               </div>
             </div>
           </div>
+
+          {aiSuggestedTags.length > 0 && (
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-indigo-800">
+                <Sparkles className="h-4 w-4" />
+                AI suggested tags
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {aiSuggestedTags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => acceptSuggestedTag(tag)}
+                      className="text-indigo-600 hover:text-indigo-800"
+                      aria-label={`Accept ${tag} tag`}
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => rejectSuggestedTag(tag)}
+                      className="text-slate-400 hover:text-slate-700"
+                      aria-label={`Reject ${tag} tag`}
+                    >
+                      Dismiss
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Section: Category Selection */}
           <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
@@ -287,7 +401,18 @@ const PostTaskPage = () => {
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Estimated Budget ($)</label>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <label className="block text-sm font-medium text-slate-700">Estimated Budget (Rs.)</label>
+                  <button
+                    type="button"
+                    onClick={openPriceSuggestion}
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    aria-label="Get AI market price estimate"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Market Estimate
+                  </button>
+                </div>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <input
@@ -329,7 +454,7 @@ const PostTaskPage = () => {
           <div
             className='flex justify-center items-center'>
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className={`group relative flex bg-indigo-300 hover:bg-indigo-500 transition-all px-2 items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-lg font-bold text-white shadow-lg shadow-primary/20  hover:bg-primary/90 active:scale-[0.98] ${loading ? 'opacity-70 cursor-not-allowed' : ' cursor-pointer'}`}
             >
@@ -345,6 +470,23 @@ const PostTaskPage = () => {
           </div>
         </form>
       </div>
+      <AIEnhancementModal
+        isOpen={showAIEnhancement}
+        onClose={() => setShowAIEnhancement(false)}
+        title={formData.title}
+        description={formData.description}
+        category={requiredSkills}
+        onApply={handleAIEnhance}
+      />
+      <PriceSuggestion
+        isOpen={showPriceSuggestion}
+        onClose={() => setShowPriceSuggestion(false)}
+        city={city}
+        category={requiredSkills}
+        description={formData.description}
+        urgency={formData.urgency}
+        onApply={handlePriceSuggestion}
+      />
     </div>
   );
 };
