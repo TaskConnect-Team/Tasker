@@ -86,7 +86,7 @@ const Analytics = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border-2 border-blue-200">
             <p className="text-sm font-medium text-blue-900">Total Revenue</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">$125,430</p>
+            <p className="text-3xl font-bold text-blue-600 mt-2">Rs. 125,430</p>
             <p className="text-xs text-blue-700 mt-2">↑ 12% from last month</p>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border-2 border-green-200">

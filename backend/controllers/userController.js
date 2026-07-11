@@ -27,6 +27,7 @@ export const updateProfile = async (req, res) => {
     if (location !== undefined) updates.location = location;
     if (profileImage !== undefined) updates.profileImage = profileImage;
     if (typeof availability === "boolean") updates.availability = availability;
+    if (services !== undefined) updates.services = services;
 
     if (req.user.role === "tasker") {
       if (typeof hourlyRate === "number") updates.hourlyRate = hourlyRate;
@@ -36,8 +37,7 @@ export const updateProfile = async (req, res) => {
       if (bio !== undefined) updates.bio = bio;
       if (location !== undefined) updates.location = location;
     }
-    if (services !== undefined) updates.services = services;
-    
+
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
       runValidators: true,
@@ -143,6 +143,13 @@ export const searchTaskers = async (req, res) => {
   try {
     const { q, skills, city, minRate, maxRate, minRating } = req.query;
     const query = { role: "tasker" };
+
+    if (!q.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query is required',
+      });
+    }
 
     if (q) {
       query.name = new RegExp(escapeRegex(q), "i");

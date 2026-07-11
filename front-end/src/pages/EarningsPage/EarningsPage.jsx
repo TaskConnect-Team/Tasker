@@ -26,9 +26,9 @@ const initialDashboard = {
   recentPayouts: [],
 };
 
-const currencyFormatter = new Intl.NumberFormat(undefined, {
+const currencyFormatter = new Intl.NumberFormat('en-PK', {
   style: "currency",
-  currency: "USD",
+  currency: "PKR",
   maximumFractionDigits: 0,
 });
 
@@ -174,7 +174,7 @@ function EarningsPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value)} />
                 <Tooltip formatter={(value) => [formatCurrency(value), "Earnings"]} />
                 <Area
                   type="monotone"

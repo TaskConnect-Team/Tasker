@@ -7,6 +7,9 @@ import BrowseTopBar from '../../components/layout/BrowseTopBar';
 import AutoCompleteSelect from '../../components/ui/AutoCompleteSelect';
 import SkeletonCard from '../../components/common/SkeletonCard';
 import MobileFilterSheet from '../../components/common/MobileFilterSheet';
+import SearchModeToggle from '../../components/ai/SearchModeToggle';
+import MatchScoreBadge from '../../components/ai/MatchScoreBadge';
+import SearchSourceIndicator from '../../components/ai/SearchSourceIndicator';
 import { SHARED_SKILLS } from '../../constants/skills';
 
 
@@ -111,6 +114,8 @@ function BrowseTaskersPage() {
   const [taskers, setTaskers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState(searchParams.get('mode') || 'ai');
+  const [searchSource, setSearchSource] = useState(null);
   const searchInputRef = useRef(null);
   const [filterSkills, setFilterSkills] = useState([]);
 
@@ -159,14 +164,39 @@ function BrowseTaskersPage() {
     const fetchTaskers = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get('/users/search-taskers', { params: filters });
+        const hasSearchTerms = Boolean(filters.q || filters.skills);
+        const requestFilters = { ...filters, skills: filters.skills || undefined };
+        let taskerResults = [];
+
+        if(!filters.q.trim()) {
+          // console.log("No search query provided, skipping search.");
+          setTaskers([]);
+          return;
+        }
+
+        if (searchMode === 'ai' && hasSearchTerms) {
+          try {
+            const { data } = await api.get('/ai/search', { params: requestFilters });
+            taskerResults = data?.data || [];
+            setSearchSource(data?.sources?.vector ? 'vector' : 'text');
+          } catch (error) {
+            toast.error('AI search is unavailable. Using standard search.');
+            const { data } = await api.get('/users/search-taskers', { params: filters });
+            taskerResults = data.taskers || [];
+            setSearchSource('text');
+          }
+        } else {
+          const { data } = await api.get('/users/search-taskers', { params: filters });
+          taskerResults = data.taskers || [];
+          setSearchSource('text');
+        }
 
         if (mounted) {
-          setTaskers(data.taskers || []);
+          setTaskers(taskerResults);
         }
       } catch (error) {
         if (mounted) {
-          toast.error(error?.response?.data?.message || 'Failed to load taskers');
+          // toast.error(error?.response?.data?.message || 'Failed to load taskers');
           setTaskers([]);
         }
       } finally {
@@ -181,7 +211,7 @@ function BrowseTaskersPage() {
     return () => {
       mounted = false;
     };
-  }, [filters]);
+  }, [filters, searchMode]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -202,6 +232,9 @@ function BrowseTaskersPage() {
     if (filterSkills.length) {
       params.skills = filterSkills.join(',');
     }
+    if (searchMode) {
+      params.mode = searchMode;
+    }
     setSearchParams(params);
     setIsFilterOpen(false);
   };
@@ -210,6 +243,7 @@ function BrowseTaskersPage() {
     setFormState(defaultFilters);
     setFilterSkills([]);
     setIsFilterOpen(false);
+    setSearchSource(null);
     setSearchParams({});
   };
 
@@ -224,25 +258,29 @@ function BrowseTaskersPage() {
           handleApply={handleApply}
           setIsFilterOpen={setIsFilterOpen}
           searchInputRef={searchInputRef}
-          placeholder="Search for tasks..."
+          placeholder="Search for taskers..."
+          aiActive={searchMode === 'ai'}
+          isSearching={loading}
         />
 
         <div className="mt-4 flex flex-col gap-6 lg:flex-row px-4 pb-10 pt-12">
           <section className="flex-1 space-y-4">
+            <SearchModeToggle mode={searchMode} setMode={setSearchMode} isLoading={loading} />
+            <SearchSourceIndicator source={searchSource} count={taskers.length} isLoading={loading} />
             {loading ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <SkeletonCard key={index} delay={index * 150} />
                 ))}
               </div>
-            ) : taskers.length ? (
+            ) :
+             taskers.length ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {taskers.map((tasker) => (
                   <div
-                    role='button'
-                    onClick={() => navigate(`/profile/${tasker.id}`)}
-                    key={tasker.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm cursor-default hover:scale-105 transition">
-                    <div className="flex items-center gap-4 ">
+                    key={tasker.id || tasker._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-lg cursor-default  transition">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-4">
                       <img
                         src={tasker.profileImage || 'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80'}
                         alt={tasker.name}
@@ -256,7 +294,14 @@ function BrowseTaskersPage() {
                           {tasker.location || 'Remote'}
                         </div>
                       </div>
+                      </div>
+                      {searchMode === 'ai' && <MatchScoreBadge score={tasker.score} />}
                     </div>
+                    {searchMode === 'ai' && tasker.score >= 0.8 && (
+                      <div className="mt-3 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        AI Match
+                      </div>
+                    )}
                     <div className="mt-4 flex flex-wrap gap-2">
                       {(tasker.skills || []).slice(0, 4).map((skill) => (
                         <span
@@ -268,13 +313,13 @@ function BrowseTaskersPage() {
                       ))}
                     </div>
                     <div className="mt-4 flex items-center justify-between text-sm text-slate-900">
-                      <span>{tasker.hourlyRate ? `$${tasker.hourlyRate}/hr` : 'Rate on request'}</span>
+                      <span>{tasker.hourlyRate ? `Rs. ${tasker.hourlyRate}/hr` : 'Contact for rate'}</span>
                       <span>⭐ {tasker.trustScore}</span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => navigate(`/profile/${tasker.id}`)}
-                      className="mt-4 w-full rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
+                      onClick={() => navigate(`/profile/${tasker.id || tasker._id}`)}
+                      className="mt-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                     >
                       View Profile
                     </button>
@@ -283,7 +328,7 @@ function BrowseTaskersPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-                No taskers matched your filters.
+                No taskers matched! Update your search or filters.
               </div>
             )}
           </section>

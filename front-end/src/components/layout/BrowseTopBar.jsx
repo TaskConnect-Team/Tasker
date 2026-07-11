@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
-import { ArrowLeft, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 function BrowseTopBar({ 
@@ -9,7 +9,9 @@ function BrowseTopBar({
     handleApply, 
     setIsFilterOpen, 
     searchInputRef,
-    placeholder = "Search..." 
+    placeholder = "Search...",
+    aiActive = false,
+    isSearching = false,
 }) {
     const navigate = useNavigate();
     const { scrollY } = useScroll();
@@ -53,8 +55,15 @@ function BrowseTopBar({
                         value={formState.q}
                         onChange={handleChange}
                         placeholder={placeholder}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        className={`w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
+                            aiActive ? 'pl-10 pr-11 shadow-[0_0_18px_rgba(99,102,241,0.12)]' : 'px-4'
+                        }`}
                     />
+                    {aiActive && (
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500">
+                            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        </span>
+                    )}
                     {formState.q && (
                         <button
                             type="submit"

@@ -248,7 +248,7 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="rounded-xl bg-slate-50 px-3 py-2">
                       <p className="text-xs uppercase tracking-wide text-slate-500">Price</p>
-                      <p className="font-semibold text-slate-900">${activeTask.price}</p>
+                      <p className="font-semibold text-slate-900">Rs. {activeTask.price}</p>
                     </div>
                     <div className="rounded-xl bg-slate-50 px-3 py-2">
                       <p className="text-xs uppercase tracking-wide text-slate-500">Urgency</p>
