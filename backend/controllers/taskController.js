@@ -114,13 +114,14 @@ export const createTask = async (req, res) => {
     }
 
 
-    const { title, description, price, city, category, urgency, scheduledAt } = req.body;
+    const { title, description, price, city, category, tags, urgency, scheduledAt } = req.body;
     const geoLocation = buildPointFromCoordinates(req.body.lat, req.body.lng);
 
     if (!geoLocation) {
-      return res.status(400).json({ message: "lat and lng are required" });
+      return res.status(400).json({ message: "Location datat are required" });
     }
 
+    console.log("task creation data : ", title, description, price, city, category, tags, urgency, scheduledAt, geoLocation)
 
     const task = await Task.create({
       title,
@@ -132,6 +133,7 @@ export const createTask = async (req, res) => {
       urgency,
       scheduledAt,
       customer: req.user.id,
+      tags: tags || [],
     });
 
     queueNotification(notifyMatchingTaskersForTask(task));
@@ -187,7 +189,15 @@ export const searchTasks = async (req, res) => {
     const { q, status, location, minPrice, maxPrice, category } = req.query;
     const query = {};
 
+    if (!q.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query is required',
+      });
+    }
+
     const terms = [q, category].filter(Boolean).join(" ").trim();
+
     if (terms) {
       const regex = new RegExp(escapeRegex(terms), "i");
       query.$or = [{ title: regex }, { description: regex }];
@@ -837,10 +847,10 @@ export const getRecommendedTasks = async (req, res) => {
     if (!tasker) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     const skills = Array.isArray(tasker.skills)
-    ? tasker.skills.map((skill) => String(skill).trim()).filter(Boolean)
-    : [];
+      ? tasker.skills.map((skill) => String(skill).trim()).filter(Boolean)
+      : [];
 
 
     if (!skills.length) {

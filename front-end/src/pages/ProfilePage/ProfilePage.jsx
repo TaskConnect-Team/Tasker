@@ -244,7 +244,7 @@ function ProfilePage() {
               {user?.role === 'tasker' ? (
                 <div className="flex items-center gap-2 text-slate-900">
                   <DollarSign className="h-4 w-4" />
-                  <span>{user?.hourlyRate ? `$${user.hourlyRate}/hr` : 'Set your hourly rate'}</span>
+                  <span>{user?.hourlyRate ? `Rs. ${user.hourlyRate}/hr` : 'Set your hourly rate in Rs.'}</span>
                 </div>
               ) : null}
               <p>
@@ -362,7 +362,7 @@ function ProfilePage() {
           {user?.role === 'tasker' ? (
             <>
               <label className="block text-sm font-medium text-slate-700">
-                Hourly rate (USD)
+                Hourly rate (Rs.)
                 <input
                   name="hourlyRate"
                   value={formState.hourlyRate}

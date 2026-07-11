@@ -30,3 +30,32 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+
+/* Add to your global CSS or component styles */
+.route-polyline {
+  stroke: #4F46E5;
+  stroke-width: 4;
+  stroke-opacity: 0.8;
+}
+
+.route-polyline-highlight {
+  stroke: #818CF8;
+  stroke-width: 6;
+  stroke-opacity: 0.4;
+  animation: pulse-route 2s ease-in-out infinite;
+}
+
+@keyframes pulse-route {
+  0%, 100% { stroke-opacity: 0.4; }
+  50% { stroke-opacity: 0.8; }
+}
+
+.location-marker-pulse {
+  animation: pulse-marker 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-marker {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
