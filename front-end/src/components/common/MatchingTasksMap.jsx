@@ -56,11 +56,12 @@ function MarkerDot({ className }) {
 function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
   const apiLoaded = useApiIsLoaded();
   const { user } = useAuth();
-  const [resolvedCenter, setResolvedCenter] = useState( toLatLng(user?.geoLocation) || taskerLocation || DEFAULT_CENTER);
+  const [resolvedCenter, setResolvedCenter] = useState( toLatLng(user?.location) || taskerLocation || DEFAULT_CENTER);
   const [tasks, setTasks] = useState([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+
 
   const resolvedSkills = useMemo(() => {
     const skills = normalizeSkillList(taskerSkill ?? user?.skills ?? user?.services);
@@ -77,8 +78,8 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
       };
     }
 
-    if (user?.geoLocation) {
-      const nextCenter = toLatLng(user.geoLocation);
+    if (user?.location) {
+      const nextCenter = toLatLng(user.location);
       if (nextCenter) {
         setResolvedCenter(nextCenter);
         return () => {
@@ -117,7 +118,7 @@ function MatchingTasksMapInner({ taskerLocation, taskerSkill }) {
     return () => {
       isCancelled = true;
     };
-  }, [taskerLocation, user?.geoLocation]);
+  }, [taskerLocation, user?.location]);
 
   useEffect(() => {
     let isCancelled = false;

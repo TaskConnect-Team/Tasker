@@ -31,7 +31,7 @@ export const formatSearchSource = (source) => {
     return 'Hybrid Search';
   }
 
-  return 'Text Search';
+  return 'Keyword Search';
 };
 
 export const getTaskConfidenceScore = (task) => {
@@ -52,9 +52,9 @@ export const getTaskConfidenceScore = (task) => {
 };
 
 export const buildAITags = (task) => {
-  const categories = Array.isArray(task?.category) ? task.category : [];
+  const tags = Array.isArray(task?.tags) ? task.tags : [];
 
-  return categories.map((tag) => ({
+  return tags.map((tag) => ({
     label: tag,
     confidence: 0.82,
   }));

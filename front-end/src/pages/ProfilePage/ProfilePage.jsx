@@ -102,6 +102,7 @@ function ProfilePage() {
       profileImage: user?.profileImage || DEFAULT_IMAGE,
       tagline: user?.tagline || '',
       location: user?.location || '',
+      city: user?.city || '',
       bio: user?.bio || '',
       skills: (user?.skills || []),
       services: (user?.services || []),
@@ -196,7 +197,7 @@ function ProfilePage() {
               <p className="text-sm text-slate-500">{user?.tagline || 'Crafting trusted task matches'}</p>
               <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                 <MapPin className="h-4 w-4" />
-                <span>{user?.location || 'Remote'}</span>
+                <span>{user?.city || 'Remote'}</span>
                 {user?.isVerified ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] uppercase text-white">
                     <BadgeCheck className="h-3 w-3" />
@@ -293,21 +294,12 @@ function ProfilePage() {
               placeholder="Reliable tasker in your neighborhood"
             />
           </label>
-          {/* <label className="block text-sm font-medium text-slate-700">
-            Location
-            <input
-              name="location"
-              value={formState.location}
-              onChange={handleChange}
-              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              placeholder="City, Country"
-            />
-          </label> */}
+         
           <SingleAutoCompleteSelect 
-            label="Location"
+            label="City"
             values={PAKISTAN_CITIES}
-            selectedValue={formState.location}
-            onValueChange={(value) => setFormState((prev) => ({ ...prev, location: value }))}
+            selectedValue={formState.city}
+            onValueChange={(value) => setFormState((prev) => ({ ...prev, city: value }))}
             placeholder="City, Country"
           />
           <button
@@ -317,7 +309,7 @@ function ProfilePage() {
                 fullName: formState.fullName,
                 profileImage: formState.profileImage,
                 tagline: formState.tagline,
-                location: formState.location,
+                city: formState.city,
               })
             }
             className={primaryButtonClasses}

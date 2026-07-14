@@ -25,9 +25,9 @@ const normalizeUser = (user) => {
     profileImage: user.profileImage || "https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80",
     tagline: user.tagline ?? '',
     bio: user.bio ?? '',
-    location: user.location ?? user.locationLabel ?? user.city ?? '',
-    geoLocation: user.geoLocation && Array.isArray(user.geoLocation.coordinates)
-      ? user.geoLocation
+    city: user.city ?? '',
+    location: user.location && Array.isArray(user.location.coordinates)
+      ? user.location
       : null,
     skills: Array.isArray(user.skills) ? user.skills : [],
     services: Array.isArray(user.services) ? user.services : [],

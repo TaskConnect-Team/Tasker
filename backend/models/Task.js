@@ -116,6 +116,7 @@ const taskSchema = new mongoose.Schema(
       type: [Number],
       select: false,
     },
+    
     embeddedAt: {
       type: Date,
       default: null,
