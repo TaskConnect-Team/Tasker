@@ -24,11 +24,6 @@ const taskSchema = new mongoose.Schema(
       trim: true,
     },
 
-    locationLabel: {
-      type: String,
-      default: "",
-    },
-
     location: {
       type: {
         type: String,
@@ -114,6 +109,7 @@ const taskSchema = new mongoose.Schema(
 
     embedding: {
       type: [Number],
+      default: [],
       select: false,
     },
     

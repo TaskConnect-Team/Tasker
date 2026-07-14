@@ -9,6 +9,7 @@ import {
 import { sendPushNotification } from "../utils/pushNotification.js";
 import { buildPointFromCoordinates } from "../utils/geo.js";
 import { normalizeList } from "../utils/normalize.js";
+import { generateEmbedding } from '../services/aiService.js';
 
 const queueNotification = (notificationPromise) => {
   Promise.resolve(notificationPromise).catch((error) => {
@@ -121,6 +122,15 @@ export const createTask = async (req, res) => {
       return res.status(400).json({ message: "Location data are required" });
     }
 
+    const semanticText = `
+      Task Title: ${title}. 
+      Task Description: ${description}. 
+      Category: ${category}. 
+      Relevant Tags: ${(tags || []).join(", ")}
+    `.trim();
+
+    const embeddingVector = await generateEmbedding(semanticText);
+    
     const task = await Task.create({
       title,
       description,
@@ -132,6 +142,8 @@ export const createTask = async (req, res) => {
       scheduledAt,
       customer: req.user.id,
       tags: tags || [],
+      embedding: embeddingVector || [],
+      embeddedAt: embeddingVector ? new Date() : null,
     });
 
     queueNotification(notifyMatchingTaskersForTask(task));

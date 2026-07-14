@@ -15,6 +15,49 @@ import { PAKISTAN_CITIES } from '../../constants/cities';
 const DEFAULT_IMAGE =
   'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
 
+const getDirtyPayload = (originalUser, newPayload) => {
+
+  const dirtyPayload = {};
+
+  Object.keys(newPayload).forEach((key) => {
+    let newValue = newPayload[key];
+    let originalValue = originalUser[key];
+
+    //  Ignore undefined values
+    if (newValue === undefined || newValue === null) return;
+
+    //  Handle Arrays (Skills, Services)
+    if (Array.isArray(newValue)) {
+      // Sort both arrays and stringify them
+      const strNew = JSON.stringify([...newValue].sort());
+      const strOrig = JSON.stringify([...(originalValue || [])].sort());
+
+      if (strNew !== strOrig) {
+        dirtyPayload[key] = newValue;
+      }
+    }
+    else {
+      if (typeof newValue === 'number' && typeof originalValue === 'string') {
+        originalValue = Number(originalValue);
+      }
+      
+      // Fix type mismatches
+      if (originalValue === null && newValue === "") {
+        originalValue = "";
+      }
+      
+      if (newValue !== originalValue) {
+        
+        console.log("value diff : ", "", key, " : ", originalValue, " => ", newValue);
+        dirtyPayload[key] = newValue;
+      }
+    }
+  });
+
+  return dirtyPayload;
+};
+
+
 function Modal({ title, open, onClose, children }) {
   return (
     <AnimatePresence>
@@ -134,10 +177,23 @@ function ProfilePage() {
   };
 
   const handleSave = async (payload) => {
+
+
+    console.log("compare data : ", user, payload);
+
+    const dirtyPayload = getDirtyPayload(user, payload);
+
+
+    if (Object.keys(dirtyPayload).length === 0) {
+      toast('No changes detected', { icon: 'ℹ️' });
+      closeModal();
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const { data } = await api.put('/users/profile', payload);
+      const { data } = await api.put('/users/profile', dirtyPayload);
       updateUser(data.user);
       toast.success('Profile updated');
       closeModal();
@@ -294,8 +350,8 @@ function ProfilePage() {
               placeholder="Reliable tasker in your neighborhood"
             />
           </label>
-         
-          <SingleAutoCompleteSelect 
+
+          <SingleAutoCompleteSelect
             label="City"
             values={PAKISTAN_CITIES}
             selectedValue={formState.city}
@@ -306,7 +362,7 @@ function ProfilePage() {
             type="button"
             onClick={() =>
               handleSave({
-                fullName: formState.fullName,
+                name: formState.fullName,
                 profileImage: formState.profileImage,
                 tagline: formState.tagline,
                 city: formState.city,
@@ -399,7 +455,7 @@ function ProfilePage() {
                 hourlyRate: user?.role === 'tasker' ? Number(formState.hourlyRate) : undefined,
                 skills: user?.role === 'tasker' ? userSkills : undefined,
                 portfolio: user?.role === 'tasker' ? formState.portfolio : undefined,
-                services:  businessServices || undefined,
+                services: businessServices || undefined,
               })
             }
             className={primaryButtonClasses}
