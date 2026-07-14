@@ -10,10 +10,13 @@ import MobileFilterSheet from '../../components/common/MobileFilterSheet';
 import SearchModeToggle from '../../components/ai/SearchModeToggle';
 import MatchScoreBadge from '../../components/ai/MatchScoreBadge';
 import SearchSourceIndicator from '../../components/ai/SearchSourceIndicator';
+import SingleAutoCompleteSelect from '../../components/ui/SingleAutoCompleteSelect';
 import { SHARED_SKILLS } from '../../constants/skills';
+import { PAKISTAN_CITIES } from '../../constants/cities';
 
 
-const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChange, handleApply, handleClear, isMobile = false }) => (
+
+const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChange, city, setCity, handleApply, handleClear, isMobile = false }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className=' justify-between hidden lg:flex'>
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -34,7 +37,7 @@ const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChan
         <div className="mt-2 flex gap-2">
           <input
             name="minPrice"
-            value={formState.minPrice}
+            value={formState.minPrice || ''}
             onChange={handleChange}
             placeholder="Min"
             type="number"
@@ -42,7 +45,7 @@ const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChan
           />
           <input
             name="maxPrice"
-            value={formState.maxPrice}
+            value={formState.maxPrice || ''}
             onChange={handleChange}
             placeholder="Max"
             type="number"
@@ -54,13 +57,6 @@ const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChan
         Category
         <div className="mt-2 flex items-center gap-2">
           <Tag className="h-4 w-4 text-slate-400" />
-          {/* <input
-            name="category"
-            value={formState.category}
-            onChange={handleChange}
-            placeholder="Plumbing"
-            className="w-full rounded-xl border border-slate-200 px-3 py-2"
-          /> */}
           <AutoCompleteSelect
             label=""
             values={SHARED_SKILLS}
@@ -74,12 +70,11 @@ const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChan
         Location
         <div className="mt-2 flex items-center gap-2">
           <MapPin className="h-4 w-4 text-slate-400" />
-          <input
-            name="location"
-            value={formState.location}
-            onChange={handleChange}
-            placeholder="City or neighborhood"
-            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+          <SingleAutoCompleteSelect
+            values={PAKISTAN_CITIES}
+            selectedValue={city}
+            onValueChange={setCity}
+            placeholder="e.g. Peshawar, Swabi..."
           />
         </div>
       </label>
@@ -87,7 +82,7 @@ const FiltersPanel = ({ formState, filterCategory, setFilterCategory, handleChan
         Status
         <select
           name="status"
-          value={formState.status}
+          value={formState.status || 'open'}
           onChange={handleChange}
           className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2"
         >
@@ -121,19 +116,35 @@ function BrowseTasksPage() {
   const [filterCategory, setFilterCategory] = useState([]);
   const [searchMode, setSearchMode] = useState(searchParams.get('mode') || 'ai');
   const [searchSource, setSearchSource] = useState(null);
+  const [city, setCity] = useState(searchParams.get('location') || '');
   const searchInputRef = useRef(null);
 
-  const filters = useMemo(
-    () => ({
-      q: searchParams.get('q') || '',
-      minPrice: searchParams.get('minPrice') || '',
-      maxPrice: searchParams.get('maxPrice') || '',
-      category: searchParams.get('category') || '',
-      location: searchParams.get('location') || '',
-      status: searchParams.get('status') || 'open',
-    }),
-    [searchParams]
-  );
+
+  const filters = useMemo(() => {
+    const params = {};
+
+    // Helper to get and trim values safely
+    const getParam = (key) => searchParams.get(key)?.trim() || '';
+
+    const q = getParam('q');
+    const minPrice = getParam('minPrice');
+    const maxPrice = getParam('maxPrice');
+    const category = getParam('category');
+    const location = getParam('location');
+    const status = getParam('status');
+
+    // Normalize 'q' on the fly before sending to API
+    if (q) { params.q = q.replace(/\s+/g, ' '); }
+    else { params.q = ''; }
+    if (minPrice) params.minPrice = minPrice;
+    if (maxPrice) params.maxPrice = maxPrice;
+    if (category) params.category = category;
+    if (location) params.location = location;
+    if (status) params.status = status;
+
+    return params;
+  }, [searchParams]);
+
 
   const [formState, setFormState] = useState(filters);
   const defaultFilters = {
@@ -153,6 +164,12 @@ function BrowseTasksPage() {
     } else {
       setFilterCategory([]);
     }
+    if (filters.location) {
+      setCity(filters.location);
+    } else {
+      setCity('');
+    }
+
   }, [filters]);
 
   useEffect(() => {
@@ -168,7 +185,6 @@ function BrowseTasksPage() {
         const hasSearchTerms = Boolean(filters.q || filters.category);
         let taskResults = [];
 
-
         if (!filters.q.trim()) {
           setTasks([]);
           return;
@@ -178,9 +194,9 @@ function BrowseTasksPage() {
           try {
             const { data } = await api.get('/ai/tasks/search', { params: filters });
             taskResults = data?.data || [];
-            setSearchSource(data?.sources?.vector ? 'vector' : 'text');
+            setSearchSource(data?.sources ? data?.sources : 'text');
           } catch (error) {
-            toast.error('AI task search is unavailable. Using standard search.');
+            console.warn('AI search failed, falling back to standard search!');
             const { data } = await api.get('/tasks/search', { params: filters });
             taskResults = data;
             setSearchSource('text');
@@ -224,27 +240,60 @@ function BrowseTasksPage() {
   const handleApply = (event) => {
     event.preventDefault();
     const params = {};
+
+    // 1. Safe copy for general form state
     Object.entries(formState).forEach(([key, value]) => {
-      if (value) {
-        params[key] = value;
-      }
-      if (filterCategory.length) {
-        params.category = filterCategory.join(',');
+      if (value && String(value).trim() !== '') {
+        params[key] = typeof value === 'string' ? value.trim() : value;
       }
     });
-    if (searchMode) {
-      params.mode = searchMode;
+
+    // 2. Only add skills if they exist
+    if (filterCategory && filterCategory.length > 0) {
+      params.category = filterCategory.join(',');
     }
+    else {
+      delete params.category;
+    }
+
+    // 3. Only add city if it isn't blank
+    if (city && city.trim() !== '') {
+      params.location = city.trim();
+    } else {
+      delete params.location;
+    }
+
+
+
+    // 4. Only add search mode if it isn't blank
+    if (searchMode && searchMode.trim() !== '') {
+      params.mode = searchMode.trim();
+    }
+
     setSearchParams(params);
     setIsFilterOpen(false);
   };
 
   const handleClear = () => {
-    setFormState(defaultFilters);
+
+    const currentQuery = searchParams.get('q') || '';
+
+    setFormState({
+      ...defaultFilters,
+      q: currentQuery
+    });
+
     setIsFilterOpen(false);
     setFilterCategory([]);
     setSearchSource(null);
-    setSearchParams({ status: 'open' });
+
+    const newParams = {};
+    if (currentQuery.trim() !== '') {
+      newParams.q = currentQuery;
+    }
+    newParams.status = 'open';
+    setSearchParams(newParams);
+
   };
 
   return (
@@ -319,6 +368,8 @@ function BrowseTasksPage() {
             <FiltersPanel
               formState={formState}
               handleChange={handleChange}
+              city={city}
+              setCity={setCity}
               filterCategory={filterCategory}
               setFilterCategory={setFilterCategory}
               handleApply={handleApply}
@@ -336,9 +387,12 @@ function BrowseTasksPage() {
         <FiltersPanel
           formState={formState}
           handleChange={handleChange}
+          city={city}
+          setCity={setCity}
+          filterCategory={filterCategory}
+          setFilterCategory={setFilterCategory}
           handleApply={handleApply}
           handleClear={handleClear}
-          isMobile={true}
         />
       </MobileFilterSheet>
     </div>

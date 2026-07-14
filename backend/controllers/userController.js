@@ -11,7 +11,7 @@ export const updateProfile = async (req, res) => {
     const name = normalizeText(req.body.fullName);
     const tagline = normalizeText(req.body.tagline);
     const bio = normalizeText(req.body.bio);
-    const locationLabel = normalizeText(req.body.locationLabel ?? req.body.location);
+    const city = normalizeText(req.body.city ?? req.body.location);
     const location = buildGeoPointFromBody(req.body);
     const profileImage = normalizeText(req.body.profileImage);
     const skills = req.body.skills !== undefined ? normalizeList(req.body.skills) : undefined;
@@ -23,7 +23,7 @@ export const updateProfile = async (req, res) => {
     if (name !== undefined) updates.name = name;
     if (tagline !== undefined) updates.tagline = tagline;
     if (bio !== undefined) updates.bio = bio;
-    if (locationLabel !== undefined) updates.locationLabel = locationLabel;
+    if (city !== undefined) updates.city = city;
     if (location !== undefined) updates.location = location;
     if (profileImage !== undefined) updates.profileImage = profileImage;
     if (typeof availability === "boolean") updates.availability = availability;

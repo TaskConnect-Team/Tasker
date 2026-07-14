@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import TaskCard from '../../components/tasks/TaskCard';
+import MobileTaskCard from '../../components/tasks/MobileTaskCard';
 
 function TaskerFeed() {
   const { user } = useAuth();
@@ -82,7 +84,29 @@ function TaskerFeed() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
+
             {tasks.map((task) => {
+              return (
+                <TaskCard
+                  key={task._id}
+                  task={task}
+                  skills={user?.skills || []}
+                  onAccept={handleAccept}
+                  isAccepting={busyId === task._id}
+                  isAssigned={task.tasker === user?.id}
+                />
+
+                // <MobileTaskCard
+                //   key={task._id}
+                //   task={task}
+                //   onAccept={handleAccept}
+                //   isAccepting={busyId === task._id}
+                // />
+
+              );
+            })}
+
+            {/* {tasks.map((task) => {
               const category = task.category || 'General';
               const match = skills.includes(String(task.category || '').toLowerCase());
 
@@ -145,10 +169,9 @@ function TaskerFeed() {
                 </div>
 
               );
-            })}
+            })} */}
           </div>
         </>
-
       )}
     </section>
   );

@@ -40,7 +40,7 @@ function BrowseTopBar({
                 {/* Back Button */}
                 <button
                     type="button"
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate("/")}
                     className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition hover:bg-slate-100"
                     aria-label="Go back"
                 >
@@ -52,7 +52,7 @@ function BrowseTopBar({
                     <input
                         ref={searchInputRef}
                         name="q"
-                        value={formState.q}
+                        value={formState.q || ''}
                         onChange={handleChange}
                         placeholder={placeholder}
                         className={`w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${

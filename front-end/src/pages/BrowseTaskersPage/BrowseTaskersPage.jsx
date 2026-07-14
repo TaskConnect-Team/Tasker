@@ -11,11 +11,13 @@ import SearchModeToggle from '../../components/ai/SearchModeToggle';
 import MatchScoreBadge from '../../components/ai/MatchScoreBadge';
 import SearchSourceIndicator from '../../components/ai/SearchSourceIndicator';
 import { SHARED_SKILLS } from '../../constants/skills';
+import { PAKISTAN_CITIES } from '../../constants/cities';
+import SingleAutoCompleteSelect from '../../components/ui/SingleAutoCompleteSelect';
 
 
 
 
-const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, handleApply, handleClear, isMobile = false }) => (
+const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, city, setCity, handleApply, handleClear, isMobile = false }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <div className=' justify-between hidden lg:flex'>
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -50,8 +52,7 @@ const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, 
         <div className="mt-2 flex gap-2">
           <input
             name="minRate"
-            // value={formState.minRate}
-            value={formState.minRate}
+            value={formState.minRate || ''}
             onChange={handleChange}
             placeholder="Min"
             type="number"
@@ -59,7 +60,7 @@ const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, 
           />
           <input
             name="maxRate"
-            value={formState.maxRate}
+            value={formState.maxRate || ''}
             onChange={handleChange}
             placeholder="Max"
             type="number"
@@ -73,7 +74,7 @@ const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, 
           <Star className="h-4 w-4 text-slate-400" />
           <input
             name="minRating"
-            value={formState.minRating}
+            value={formState.minRating || ''}
             onChange={handleChange}
             placeholder="4.5"
             type="number"
@@ -86,12 +87,11 @@ const FiltersPanel = ({ formState, handleChange, filterSkills, setFilterSkills, 
         City
         <div className="mt-2 flex items-center gap-2">
           <MapPin className="h-4 w-4 text-slate-400" />
-          <input
-            name="city"
-            value={formState.city}
-            onChange={handleChange}
-            placeholder="City"
-            className="w-full rounded-xl border border-slate-200 px-3 py-2"
+          <SingleAutoCompleteSelect
+            values={PAKISTAN_CITIES}
+            selectedValue={city}
+            onValueChange={setCity}
+            placeholder="e.g. Peshawar, Swabi..."
           />
         </div>
       </label>
@@ -118,19 +118,31 @@ function BrowseTaskersPage() {
   const [searchSource, setSearchSource] = useState(null);
   const searchInputRef = useRef(null);
   const [filterSkills, setFilterSkills] = useState([]);
+  const [city, setCity] = useState('');
 
 
-  const filters = useMemo(
-    () => ({
-      q: searchParams.get('q') || '',
-      skills: searchParams.get('skills') || '',
-      city: searchParams.get('city') || '',
-      minRate: searchParams.get('minRate') || '',
-      maxRate: searchParams.get('maxRate') || '',
-      minRating: searchParams.get('minRating') || '',
-    }),
-    [searchParams]
-  );
+  const filters = useMemo(() => {
+    const params = {};
+
+    const getParam = (key) => searchParams.get(key)?.trim() || '';
+    const q = getParam('q');
+    const skills = getParam('skills');
+    const city = getParam('city');
+    const minRate = getParam('minRate');
+    const maxRate = getParam('maxRate');
+    const minRating = getParam('minRating');
+
+
+    // Normalize 'q' on the fly before sending to API
+    if (q) params.q = q.replace(/\s+/g, ' ');
+    if (skills) params.skills = skills;
+    if (city) params.city = city;
+    if (minRate) params.minRate = minRate;
+    if (maxRate) params.maxRate = maxRate;
+    if (minRating) params.minRating = minRating;
+
+    return params;
+  }, [searchParams]);
 
 
   const [formState, setFormState] = useState(filters);
@@ -151,6 +163,11 @@ function BrowseTaskersPage() {
     } else {
       setFilterSkills([]);
     }
+    if (filters.city) {
+      setCity(filters.city);
+    } else {
+      setCity('');
+    }
 
   }, [filters]);
 
@@ -164,12 +181,11 @@ function BrowseTaskersPage() {
     const fetchTaskers = async () => {
       setLoading(true);
       try {
-        const hasSearchTerms = Boolean(filters.q || filters.skills);
+        const hasSearchTerms = Boolean(filters.q);
         const requestFilters = { ...filters, skills: filters.skills || undefined };
         let taskerResults = [];
 
-        if(!filters.q.trim()) {
-          // console.log("No search query provided, skipping search.");
+        if (!filters.q.trim()) {
           setTaskers([]);
           return;
         }
@@ -180,7 +196,7 @@ function BrowseTaskersPage() {
             taskerResults = data?.data || [];
             setSearchSource(data?.sources?.vector ? 'vector' : 'text');
           } catch (error) {
-            toast.error('AI search is unavailable. Using standard search.');
+            console.warn("using standard search due to AI search failure!");
             const { data } = await api.get('/users/search-taskers', { params: filters });
             taskerResults = data.taskers || [];
             setSearchSource('text');
@@ -224,27 +240,57 @@ function BrowseTaskersPage() {
   const handleApply = (event) => {
     event.preventDefault();
     const params = {};
+
+    // 1. Safe copy for general form state
     Object.entries(formState).forEach(([key, value]) => {
-      if (value) {
-        params[key] = value;
+      if (value && String(value).trim() !== '') {
+        params[key] = typeof value === 'string' ? value.trim() : value;
       }
     });
-    if (filterSkills.length) {
+
+    // 2. Only add skills if they exist
+    if (filterSkills && filterSkills.length > 0) {
       params.skills = filterSkills.join(',');
     }
-    if (searchMode) {
-      params.mode = searchMode;
+    else {
+      delete params.skills;
     }
+
+    // 3. Only add city if it isn't blank
+    if (city && city.trim() !== '') {
+      params.city = city.trim();
+    }
+    else {
+      delete params.city;
+    }
+
+    // 4. Only add search mode if it isn't blank
+    if (searchMode && searchMode.trim() !== '') {
+      params.mode = searchMode.trim();
+    }
+
     setSearchParams(params);
     setIsFilterOpen(false);
   };
 
   const handleClear = () => {
-    setFormState(defaultFilters);
+    const currentQuery = searchParams.get('q') || '';
+
+    setFormState({
+      ...defaultFilters,
+      q: currentQuery
+    });
+
     setFilterSkills([]);
+    setCity('');
     setIsFilterOpen(false);
     setSearchSource(null);
-    setSearchParams({});
+    const newParams = {};
+    if (currentQuery.trim() !== '') {
+      newParams.q = currentQuery;
+    }
+    setSearchParams(newParams);
+
   };
 
 
@@ -274,63 +320,63 @@ function BrowseTaskersPage() {
                 ))}
               </div>
             ) :
-             taskers.length ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {taskers.map((tasker) => (
-                  <div
-                    key={tasker.id || tasker._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-lg cursor-default  transition">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-4">
-                      <img
-                        src={tasker.profileImage || 'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80'}
-                        alt={tasker.name}
-                        className="h-14 w-14 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="text-base font-semibold text-slate-900">{tasker.name}</p>
-                        <p className="text-xs text-slate-500">{tasker.tagline || 'Reliable pro'}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                          <MapPin className="h-3 w-3" />
-                          {tasker.location || 'Remote'}
+              taskers.length ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {taskers.map((tasker) => (
+                    <div
+                      key={tasker.id || tasker._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-lg cursor-default  transition">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={tasker.profileImage || 'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80'}
+                            alt={tasker.name}
+                            className="h-14 w-14 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="text-base font-semibold text-slate-900">{tasker.name}</p>
+                            <p className="text-xs text-slate-500">{tasker.tagline || 'Reliable pro'}</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                              <MapPin className="h-3 w-3" />
+                              {tasker.location || 'Remote'}
+                            </div>
+                          </div>
                         </div>
+                        {searchMode === 'ai' && <MatchScoreBadge score={tasker.score} />}
                       </div>
+                      {searchMode === 'ai' && tasker.score >= 0.8 && (
+                        <div className="mt-3 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+                          AI Match
+                        </div>
+                      )}
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(tasker.skills || []).slice(0, 4).map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600"
+                          >
+                            {skill}
+                          </span>
+                        ))}
                       </div>
-                      {searchMode === 'ai' && <MatchScoreBadge score={tasker.score} />}
-                    </div>
-                    {searchMode === 'ai' && tasker.score >= 0.8 && (
-                      <div className="mt-3 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-                        AI Match
+                      <div className="mt-4 flex items-center justify-between text-sm text-slate-900">
+                        <span>{tasker.hourlyRate ? `Rs. ${tasker.hourlyRate}/hr` : 'Contact for rate'}</span>
+                        <span>⭐ {tasker.trustScore}</span>
                       </div>
-                    )}
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(tasker.skills || []).slice(0, 4).map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600"
-                        >
-                          {skill}
-                        </span>
-                      ))}
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/profile/${tasker.id || tasker._id}`)}
+                        className="mt-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                      >
+                        View Profile
+                      </button>
                     </div>
-                    <div className="mt-4 flex items-center justify-between text-sm text-slate-900">
-                      <span>{tasker.hourlyRate ? `Rs. ${tasker.hourlyRate}/hr` : 'Contact for rate'}</span>
-                      <span>⭐ {tasker.trustScore}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/profile/${tasker.id || tasker._id}`)}
-                      className="mt-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                    >
-                      View Profile
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
-                No taskers matched! Update your search or filters.
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
+                  No taskers matched! Update your search or filters.
+                </div>
+              )}
           </section>
 
           <aside className="hidden w-full max-w-sm lg:block">
@@ -338,6 +384,8 @@ function BrowseTaskersPage() {
               formState={formState}
               handleChange={handleChange}
               filterSkills={filterSkills}
+              city={city}
+              setCity={setCity}
               setFilterSkills={setFilterSkills}
               handleApply={handleApply}
               handleClear={handleClear}
@@ -355,6 +403,8 @@ function BrowseTaskersPage() {
           formState={formState}
           handleChange={handleChange}
           filterSkills={filterSkills}
+          city={city}
+          setCity={setCity}
           setFilterSkills={setFilterSkills}
           handleApply={handleApply}
           handleClear={handleClear}

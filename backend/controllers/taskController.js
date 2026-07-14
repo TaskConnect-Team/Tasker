@@ -118,10 +118,8 @@ export const createTask = async (req, res) => {
     const geoLocation = buildPointFromCoordinates(req.body.lat, req.body.lng);
 
     if (!geoLocation) {
-      return res.status(400).json({ message: "Location datat are required" });
+      return res.status(400).json({ message: "Location data are required" });
     }
-
-    console.log("task creation data : ", title, description, price, city, category, tags, urgency, scheduledAt, geoLocation)
 
     const task = await Task.create({
       title,
@@ -842,7 +840,7 @@ export const completeTaskByTasker = async (req, res) => {
  */
 export const getRecommendedTasks = async (req, res) => {
   try {
-    const tasker = await User.findById(req.user._id).select("skills city");
+    const tasker = req.user;
 
     if (!tasker) {
       return res.status(404).json({ message: "User not found" });
@@ -852,10 +850,10 @@ export const getRecommendedTasks = async (req, res) => {
       ? tasker.skills.map((skill) => String(skill).trim()).filter(Boolean)
       : [];
 
-
     if (!skills.length) {
       return res.status(200).json([]);
     }
+
     const query = {
       status: "open",
       category: { $in: skills },

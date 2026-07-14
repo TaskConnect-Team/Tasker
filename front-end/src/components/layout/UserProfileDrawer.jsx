@@ -116,7 +116,7 @@ function UserProfileDrawer({ isOpen, onClose }) {
                 <p className="text-sm text-slate-500">{user?.tagline || 'Crafting trusted task matches'}</p>
                 <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                   <MapPin className="h-4 w-4" />
-                  <span>{user?.location || 'Remote'}</span>
+                  <span>{user?.city || 'Remote'}</span>
                   <span className="rounded-full bg-indigo-500 px-2 py-0.5 text-[10px] uppercase text-white">
                     {user?.role ?? 'member'}
                   </span>

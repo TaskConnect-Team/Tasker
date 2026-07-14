@@ -16,6 +16,7 @@ const SingleAutoCompleteSelect = ({
   label, 
   placeholder = "Search city..." 
 }) => {
+
   const [query, setQuery] = useState(selectedValue);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
