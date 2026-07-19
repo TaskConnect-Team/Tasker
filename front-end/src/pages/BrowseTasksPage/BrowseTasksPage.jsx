@@ -194,7 +194,8 @@ function BrowseTasksPage() {
           try {
             const { data } = await api.get('/ai/tasks/search', { params: filters });
             taskResults = data?.data || [];
-            setSearchSource(data?.sources ? data?.sources : 'text');
+
+            setSearchSource(data?.sources && data?.sources?.vector !== undefined ? 'vector' : 'text');
           } catch (error) {
             console.warn('AI search failed, falling back to standard search!');
             const { data } = await api.get('/tasks/search', { params: filters });

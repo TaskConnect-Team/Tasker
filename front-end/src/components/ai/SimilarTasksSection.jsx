@@ -14,8 +14,7 @@ function SimilarTasksSection({ taskId, limit = 4 }) {
     let mounted = true;
 
     const fetchSimilarTasks = async () => {
-      // if (!taskId) {
-      if (true) {
+      if (!taskId) {
         setLoading(false);
         return;
       }
@@ -69,7 +68,12 @@ function SimilarTasksSection({ taskId, limit = 4 }) {
             <button
               key={task._id || task.id}
               type="button"
-              onClick={() => navigate(`/tasks/${task._id || task.id}`)}
+              onClick={() => {
+                // 1. Force the layout layout container or window to shift instantly to the top
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                // 2. Perform path transition
+                navigate(`/tasks/${task._id || task.id}`);
+              }}
               className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-indigo-200 hover:bg-white"
             >
               <div className="flex items-start justify-between gap-3">

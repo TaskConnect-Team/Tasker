@@ -130,7 +130,7 @@ export const createTask = async (req, res) => {
     `.trim();
 
     const embeddingVector = await generateEmbedding(semanticText);
-    
+
     const task = await Task.create({
       title,
       description,
@@ -171,7 +171,7 @@ export const getTasks = async (req, res) => {
 
     // Location filter
     if (req.query.location) {
-      query.locationLabel = new RegExp(escapeRegex(req.query.location), "i");
+      query.city = new RegExp(escapeRegex(req.query.location), "i");
     }
 
     // Urgency filter
@@ -216,7 +216,7 @@ export const searchTasks = async (req, res) => {
     query.status = status || "open";
 
     if (location) {
-      query.locationLabel = new RegExp(escapeRegex(location), "i");
+      query.city = new RegExp(escapeRegex(location), "i");
     }
 
     if (minPrice || maxPrice) {

@@ -14,8 +14,8 @@ export const aiRateLimiter = rateLimit({
 
 // Stricter limit for embedding (more expensive)
 export const embeddingRateLimiter = rateLimit({
-  windowMs: 900000, // 15 minutes
-  max: 5, // Only 5 embedding requests per window
+  windowMs: 300000, // 5 minutes
+  max: 25, // Only 25 embedding requests per window
   message: {
     success: false,
     message: 'Too many AI embedding requests. Please wait.',
