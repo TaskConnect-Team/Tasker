@@ -9,6 +9,7 @@ import {
 import { sendPushNotification } from "../utils/pushNotification.js";
 import { buildPointFromCoordinates } from "../utils/geo.js";
 import { normalizeList } from "../utils/normalize.js";
+import { generateEmbedding } from '../services/aiService.js';
 
 const queueNotification = (notificationPromise) => {
   Promise.resolve(notificationPromise).catch((error) => {
@@ -118,10 +119,17 @@ export const createTask = async (req, res) => {
     const geoLocation = buildPointFromCoordinates(req.body.lat, req.body.lng);
 
     if (!geoLocation) {
-      return res.status(400).json({ message: "Location datat are required" });
+      return res.status(400).json({ message: "Location data are required" });
     }
 
-    console.log("task creation data : ", title, description, price, city, category, tags, urgency, scheduledAt, geoLocation)
+    const semanticText = `
+      Task Title: ${title}. 
+      Task Description: ${description}. 
+      Category: ${category}. 
+      Relevant Tags: ${(tags || []).join(", ")}
+    `.trim();
+
+    const embeddingVector = await generateEmbedding(semanticText);
 
     const task = await Task.create({
       title,
@@ -134,6 +142,8 @@ export const createTask = async (req, res) => {
       scheduledAt,
       customer: req.user.id,
       tags: tags || [],
+      embedding: embeddingVector || [],
+      embeddedAt: embeddingVector ? new Date() : null,
     });
 
     queueNotification(notifyMatchingTaskersForTask(task));
@@ -161,7 +171,7 @@ export const getTasks = async (req, res) => {
 
     // Location filter
     if (req.query.location) {
-      query.locationLabel = new RegExp(escapeRegex(req.query.location), "i");
+      query.city = new RegExp(escapeRegex(req.query.location), "i");
     }
 
     // Urgency filter
@@ -206,7 +216,7 @@ export const searchTasks = async (req, res) => {
     query.status = status || "open";
 
     if (location) {
-      query.locationLabel = new RegExp(escapeRegex(location), "i");
+      query.city = new RegExp(escapeRegex(location), "i");
     }
 
     if (minPrice || maxPrice) {
@@ -842,7 +852,7 @@ export const completeTaskByTasker = async (req, res) => {
  */
 export const getRecommendedTasks = async (req, res) => {
   try {
-    const tasker = await User.findById(req.user._id).select("skills city");
+    const tasker = req.user;
 
     if (!tasker) {
       return res.status(404).json({ message: "User not found" });
@@ -852,10 +862,10 @@ export const getRecommendedTasks = async (req, res) => {
       ? tasker.skills.map((skill) => String(skill).trim()).filter(Boolean)
       : [];
 
-
     if (!skills.length) {
       return res.status(200).json([]);
     }
+
     const query = {
       status: "open",
       category: { $in: skills },

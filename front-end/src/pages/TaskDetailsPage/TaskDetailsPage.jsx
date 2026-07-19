@@ -27,6 +27,7 @@ import SimilarTasksSection from '../../components/ai/SimilarTasksSection';
 import AITagDisplay from '../../components/ai/AITagDisplay';
 import MatchScoreBadge from '../../components/ai/MatchScoreBadge';
 import { buildAITags, getTaskConfidenceScore } from '../../utils/searchHelpers';
+import LocationAccessModal from '../../components/common/LocationAccessModal';
 
 function TaskDetailsPage() {
   const { taskId } = useParams();
@@ -36,12 +37,16 @@ function TaskDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationModalAction, setLocationModalAction] = useState(null);
 
   const { startTracking, stopTracking } = useTaskTracking();
 
   const fetchTask = useCallback(async (isMountedRef) => {
     try {
       const { data } = await api.get(`/tasks/${taskId}`);
+
+      // console.log('Fetched task data:', data);
 
       if (isMountedRef.current) {
         setTask(data);
@@ -123,12 +128,47 @@ function TaskDetailsPage() {
     ? { lat: coordinates[1], lng: coordinates[0] }
     : null;
 
+
   const showAccept = taskStatus === 'open' && user?.role === 'tasker';
   const showStart =
     taskStatus === 'assigned' && task?.tasker && task.tasker === user?.id;
   const showComplete =
     taskStatus === 'in-progress' && task?.tasker && task.tasker === user?.id;
   const showFinished = taskStatus === 'completed';
+
+
+  const handleMapButtonClick = useCallback(() => {
+
+    if (taskStatus === 'open') {
+      setIsMapModalOpen(true);
+      return;
+    }
+
+
+    if (taskStatus === 'assigned' || taskStatus === 'in-progress') {
+      const isAssignedTasker = user?.role === 'tasker' && task?.tasker === user?.id;
+
+      if (isAssignedTasker) {
+        setIsMapModalOpen(true);
+        return;
+      }
+
+      setLocationModalAction('viewMap');
+      setShowLocationModal(true);
+      return;
+    }
+
+    // For completed or cancelled tasks
+    if (taskStatus === 'completed' || taskStatus === 'cancelled') {
+      setLocationModalAction('inactive');
+      setShowLocationModal(true);
+      return;
+    }
+
+    // Fallback
+    toast.error('Location is not available for this task');
+  }, [taskStatus, user, task, setIsMapModalOpen]);
+
 
   const handleStatusUpdate = async (nextStatus) => {
     if (!nextStatus) return;
@@ -151,6 +191,23 @@ function TaskDetailsPage() {
       setUpdating(false);
     }
   };
+
+
+  const canAccessRoute = useMemo(() => {
+    if (!task || !mapCenter) return false;
+
+    if (user?.role !== 'tasker') return false;
+
+    const taskStatus = task?.status;
+
+    if (taskStatus === 'assigned' || taskStatus === 'in-progress') {
+      return task?.tasker === user?.id;
+    }
+
+    return true;
+  }, [task, user, mapCenter]);
+
+
 
   if (loading) {
     return (
@@ -301,8 +358,8 @@ function TaskDetailsPage() {
                             className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700"
                           >
                             {tag.icon && <span className="text-indigo-400">{tag.icon}</span>}
-                            {tag.name}
-                            {tag.confidence && tag.confidence > 80 && (
+                            {tag.label}
+                            {tag.confidence && tag.confidence > 0.8 && (
                               <BadgeCheck className="h-3 w-3 text-emerald-500" />
                             )}
                           </span>
@@ -410,7 +467,7 @@ function TaskDetailsPage() {
                       variant="secondary"
                       size="sm"
                       className="w-full"
-                      onClick={() => setIsMapModalOpen(true)}
+                      onClick={handleMapButtonClick}
                     >
                       <MapPin className="h-4 w-4" />
                       View on Map
@@ -589,7 +646,7 @@ function TaskDetailsPage() {
                   variant="secondary"
                   size="sm"
                   className="lg:hidden"
-                  onClick={() => setIsMapModalOpen(true)}
+                  onClick={handleMapButtonClick}
                 >
                   <MapPin className="h-4 w-4" />
                   Map
@@ -620,6 +677,27 @@ function TaskDetailsPage() {
             isOpen={isMapModalOpen}
             onClose={() => setIsMapModalOpen(false)}
             mapCenter={mapCenter}
+            showRoute={canAccessRoute}
+          />
+        )}
+
+        {showLocationModal && (
+          <LocationAccessModal
+            isOpen={showLocationModal}
+            onClose={() => {
+              setShowLocationModal(false);
+              // If the action was to view the map and user is the assigned tasker
+              if (locationModalAction === 'viewMap' &&
+                user?.role === 'tasker' &&
+                task?.tasker === user?.id) {
+                setIsMapModalOpen(true);
+              }
+            }}
+            task={task}
+            userRole={user?.role}
+            taskerId={task?.tasker}
+            currentUserId={user?.id}
+            autoHideDelay={5000} // 5 seconds
           />
         )}
       </div>

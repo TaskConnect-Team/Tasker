@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, ClipboardList, Clock, Hourglass, XCircle } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Clock, Hourglass, Map, MapPin, XCircle } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../api/axios';
@@ -167,26 +167,41 @@ function OrdersPage() {
   return (
     <section className="space-y-6">
       <h1 className="text-2xl font-semibold text-slate-900">Orders</h1>
-      <div className="flex flex-wrap gap-3">
-        {dynamicTabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${isActive
-                ? 'border-primary bg-primary/10 text-slate-900'
-                : 'border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          );
-        })}
+
+
+      <div className="w-full rounded-xl bg-slate-100 p-1">
+        <div className="flex w-full items-center gap-1">
+          {dynamicTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                // Removed flex-col/flex-row switching. We use flex-col for mobile, 
+                // but we tightly control the horizontal spacing on large screens by switching back to a centered row.
+                className={`relative inline-flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg py-2 px-1 transition-all duration-200 md:flex-row md:gap-1.5 md:px-3 ${isActive
+                  ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
+                  : 'text-slate-500 hover:bg-white/40 hover:text-slate-800'
+                  }`}
+              >
+                {/* Icon dimensions stay consistent and centered */}
+                <Icon className="h-4 w-4 shrink-0" />
+
+                {/* 
+            FIX 1: Changed leading-none to leading-normal and added py-0.5 to prevent vertical clipping.
+            FIX 2: Keeps text-center on mobile, but aligns perfectly next to the icon on desktop via md:text-left.
+          */}
+                <span className="block w-full truncate text-center text-[10px] font-medium leading-normal py-0.5 md:w-auto md:text-left md:text-sm md:font-semibold">
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -195,45 +210,69 @@ function OrdersPage() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
-          className="space-y-4"
+          className="grid gap-4 md:grid-cols-2"
         >
           {loading ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
               Loading tasks...
             </div>
           ) : filteredTasks.length ? (
-            filteredTasks.map((task) => (
-              <div
-                key={task._id}
-                className="flex gap-4 rounded-2xl border border-slate-200 hover:shadow-lg transition-all bg-white p-6 shadow-sm md:flex-row items-center justify-between"
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">{task.title}</div>
-                    <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                      <span>{task.city || 'Remote'}</span>
-                      <span className="rounded-full border border-slate-200 px-2 py-0.5">
-                        {statusLabel[task.status] ?? task.status}
+            filteredTasks.map((task) => {
+              // 1. Compute status badge styles dynamically
+              const statusConfig = {
+                'open': { label: 'Open', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                'assigned': { label: 'Assigned', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
+                'in-progress': { label: 'In Progress', bg: 'bg-amber-50 text-amber-700 border-amber-200' },
+                'completed': { label: 'Completed', bg: 'bg-slate-100 text-slate-700 border-slate-200' },
+                'reviewed': { label: 'Reviewed', bg: 'bg-slate-50 text-slate-400 border-slate-100' },
+              };
+              const currentStatus = statusConfig[task.status] || { label: task.status, bg: 'bg-slate-50 text-slate-600' };
+
+              return (
+                <div
+                  key={task._id}
+                  className="group relative flex flex-col lg:flex-row lg:items-center justify-between gap-6 rounded-2xl border border-slate-100 bg-white p-5 transition-all hover:border-slate-200 hover:shadow-md"
+                >
+                  {/* Left Side: Core Metadata */}
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {/* Contextual Status Badge */}
+                      <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase ${currentStatus.bg}`}>
+                        {currentStatus.label}
                       </span>
-                      <span>Rs. {task.price}</span>
+                      <span className="text-xs font-semibold text-indigo-600">
+                        Rs. {task.price.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      {task.title}
+                    </h3>
+
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{task.city}</span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  {/* Right Side: Contextual Clean Actions */}
+                  <div className="flex flex-wrap md:flex-nowrap items-center gap-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
+
+                    {/* Main Contextual Dynamic Button */}
                     {role === 'customer' && task.status === 'open' && (
                       <button
                         type="button"
                         onClick={() => handleCancel(task._id)}
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                        className="w-full md:w-auto rounded-xl border border-rose-200 bg-rose-50/50 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
                       >
-                        Cancel
+                        Cancel Order
                       </button>
                     )}
                     {role === 'customer' && task.status === 'in-progress' && (
                       <button
                         type="button"
                         onClick={() => handleTrackTasker(task)}
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                        className="w-full md:w-auto rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all"
                       >
                         Track Tasker
                       </button>
@@ -242,7 +281,7 @@ function OrdersPage() {
                       <button
                         type="button"
                         onClick={() => handleOpenReview(task)}
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                        className="w-full md:w-auto rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-amber-600 transition-all"
                       >
                         Leave a Review
                       </button>
@@ -250,7 +289,7 @@ function OrdersPage() {
                     {role === 'customer' && task.status === 'reviewed' && (
                       <button
                         type="button"
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-400"
+                        className="w-full md:w-auto rounded-xl bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-400 border border-slate-100 cursor-not-allowed"
                         disabled
                       >
                         Reviewed
@@ -260,7 +299,7 @@ function OrdersPage() {
                       <button
                         type="button"
                         onClick={() => handleStart(task._id)}
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                        className="w-full md:w-auto rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all"
                       >
                         Start Work
                       </button>
@@ -269,25 +308,24 @@ function OrdersPage() {
                       <button
                         type="button"
                         onClick={() => handleFinish(task._id)}
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                        className="w-full md:w-auto rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-700 transition-all"
                       >
-                        Mark as Completed
+                        Mark Completed
                       </button>
                     )}
-                  </div>
 
+                    {/* Secondary Persistent Button */}
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/tasks/${task._id}`)}
+                      className="w-full md:w-auto rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-center items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/tasks/${task._id}`)}
-                    className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
               No active works yet.

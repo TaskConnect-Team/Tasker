@@ -13,5 +13,4 @@ export const normalizeList = (value) => {
   return [];
 };
 
-export const normalizeText = (value) =>
-  typeof value === "string" ? value.trim() : undefined;
+export const normalizeText = (value) =>  typeof value === "string" ? value.trim() : undefined;

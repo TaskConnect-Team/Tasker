@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
-    locationLabel: { type: String, default: "" },
     location: {
       type: {
         type: String,
@@ -40,9 +39,8 @@ const userSchema = new mongoose.Schema(
     fcmTokens: [{ type: String, trim: true }],
     embedding: {
       type: [Number],
-      select: false, // Don't return by default
+      select: false, // 
     },
-
     // When this user was last embedded (for re-indexing)
     embeddedAt: {
       type: Date,

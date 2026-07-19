@@ -507,7 +507,7 @@ const MapViewModel = ({
                 </>
               )}
               
-              {!showRoute && !route && !isLoading && (
+              {showRoute && !route && !isLoading && (
                 <button
                   onClick={handleGetDirections}
                   disabled={isLocating || isLoading}

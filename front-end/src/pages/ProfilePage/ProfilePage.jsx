@@ -15,6 +15,49 @@ import { PAKISTAN_CITIES } from '../../constants/cities';
 const DEFAULT_IMAGE =
   'https://img.magnific.com/free-vector/user-circles-set_78370-4704.jpg?semt=ais_hybrid&w=740&q=80';
 
+const getDirtyPayload = (originalUser, newPayload) => {
+
+  const dirtyPayload = {};
+
+  Object.keys(newPayload).forEach((key) => {
+    let newValue = newPayload[key];
+    let originalValue = originalUser[key];
+
+    //  Ignore undefined values
+    if (newValue === undefined || newValue === null) return;
+
+    //  Handle Arrays (Skills, Services)
+    if (Array.isArray(newValue)) {
+      // Sort both arrays and stringify them
+      const strNew = JSON.stringify([...newValue].sort());
+      const strOrig = JSON.stringify([...(originalValue || [])].sort());
+
+      if (strNew !== strOrig) {
+        dirtyPayload[key] = newValue;
+      }
+    }
+    else {
+      if (typeof newValue === 'number' && typeof originalValue === 'string') {
+        originalValue = Number(originalValue);
+      }
+      
+      // Fix type mismatches
+      if (originalValue === null && newValue === "") {
+        originalValue = "";
+      }
+      
+      if (newValue !== originalValue) {
+        
+        console.log("value diff : ", "", key, " : ", originalValue, " => ", newValue);
+        dirtyPayload[key] = newValue;
+      }
+    }
+  });
+
+  return dirtyPayload;
+};
+
+
 function Modal({ title, open, onClose, children }) {
   return (
     <AnimatePresence>
@@ -102,6 +145,7 @@ function ProfilePage() {
       profileImage: user?.profileImage || DEFAULT_IMAGE,
       tagline: user?.tagline || '',
       location: user?.location || '',
+      city: user?.city || '',
       bio: user?.bio || '',
       skills: (user?.skills || []),
       services: (user?.services || []),
@@ -133,10 +177,23 @@ function ProfilePage() {
   };
 
   const handleSave = async (payload) => {
+
+
+    console.log("compare data : ", user, payload);
+
+    const dirtyPayload = getDirtyPayload(user, payload);
+
+
+    if (Object.keys(dirtyPayload).length === 0) {
+      toast('No changes detected', { icon: 'ℹ️' });
+      closeModal();
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const { data } = await api.put('/users/profile', payload);
+      const { data } = await api.put('/users/profile', dirtyPayload);
       updateUser(data.user);
       toast.success('Profile updated');
       closeModal();
@@ -196,7 +253,7 @@ function ProfilePage() {
               <p className="text-sm text-slate-500">{user?.tagline || 'Crafting trusted task matches'}</p>
               <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
                 <MapPin className="h-4 w-4" />
-                <span>{user?.location || 'Remote'}</span>
+                <span>{user?.city || 'Remote'}</span>
                 {user?.isVerified ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] uppercase text-white">
                     <BadgeCheck className="h-3 w-3" />
@@ -293,31 +350,22 @@ function ProfilePage() {
               placeholder="Reliable tasker in your neighborhood"
             />
           </label>
-          {/* <label className="block text-sm font-medium text-slate-700">
-            Location
-            <input
-              name="location"
-              value={formState.location}
-              onChange={handleChange}
-              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              placeholder="City, Country"
-            />
-          </label> */}
-          <SingleAutoCompleteSelect 
-            label="Location"
+
+          <SingleAutoCompleteSelect
+            label="City"
             values={PAKISTAN_CITIES}
-            selectedValue={formState.location}
-            onValueChange={(value) => setFormState((prev) => ({ ...prev, location: value }))}
+            selectedValue={formState.city}
+            onValueChange={(value) => setFormState((prev) => ({ ...prev, city: value }))}
             placeholder="City, Country"
           />
           <button
             type="button"
             onClick={() =>
               handleSave({
-                fullName: formState.fullName,
+                name: formState.fullName,
                 profileImage: formState.profileImage,
                 tagline: formState.tagline,
-                location: formState.location,
+                city: formState.city,
               })
             }
             className={primaryButtonClasses}
@@ -407,7 +455,7 @@ function ProfilePage() {
                 hourlyRate: user?.role === 'tasker' ? Number(formState.hourlyRate) : undefined,
                 skills: user?.role === 'tasker' ? userSkills : undefined,
                 portfolio: user?.role === 'tasker' ? formState.portfolio : undefined,
-                services:  businessServices || undefined,
+                services: businessServices || undefined,
               })
             }
             className={primaryButtonClasses}
