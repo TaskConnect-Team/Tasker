@@ -1,6 +1,8 @@
 import Review from "../models/Review.js";
 import Task from "../models/Task.js";
 import User from "../models/User.js";
+import { generateEmbedding } from '../services/aiService.js';
+import { runReviewEmbeddingWorker } from '../workers/embeddingWorker.js';
 
 /**
  * @desc    Create a review for a completed task
@@ -54,6 +56,8 @@ export const createReview = async (req, res) => {
         : [],
     });
 
+
+
     task.status = "reviewed";
     task.rating = normalizedRating;
     task.review = review.comment;
@@ -76,6 +80,11 @@ export const createReview = async (req, res) => {
       averageRating: Number(ratingStats.averageRating.toFixed(2)),
       totalReviews: ratingStats.totalReviews,
     });
+
+    // Trigger Review Embedding
+    if (review.comment.length > 5 || review.tags.length > 0) {
+      runReviewEmbeddingWorker(review._id, review, task.category).catch(console.error);
+    }
 
     return res.status(201).json({ message: "Review submitted", review });
   } catch (error) {

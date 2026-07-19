@@ -178,11 +178,12 @@ router.get('/search', protect, embeddingRateLimiter, async (req, res) => {
     // Generate embedding for search query
     const embedding = await generateEmbedding([q, skills, city].filter(Boolean).join(' '));
 
+
     // Perform vector search on Tasker collection using the imported User model
     const vectorResults = await User.aggregate([
       {
         $vectorSearch: {
-          index: 'tasker_semantic_search',
+          index: 'task_vector_search',
           path: 'embedding',
           queryVector: embedding,
           numCandidates: 100,
@@ -212,6 +213,8 @@ router.get('/search', protect, embeddingRateLimiter, async (req, res) => {
       },
     ]);
 
+    console.log("vector search results : ", vectorResults.length)
+
     // Traditional text search (backup/fallback)
     const textResults = await User.find({
       role: 'tasker',
@@ -221,6 +224,8 @@ router.get('/search', protect, embeddingRateLimiter, async (req, res) => {
         { bio: { $regex: q, $options: 'i' } },
       ],
     }).limit(limit);
+
+    console.log("text search results : ", textResults.length)
 
     const combined = [...vectorResults];
     const existingIds = new Set(combined.map(r => r._id.toString()));
@@ -276,7 +281,7 @@ router.get('/tasks/search', protect, embeddingRateLimiter, async (req, res) => {
     const searchText = [q, category, location].filter(Boolean).join(' ').trim();
 
 
-    if (!q.trim() ) {
+    if (!q.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Search query is required',
@@ -299,13 +304,14 @@ router.get('/tasks/search', protect, embeddingRateLimiter, async (req, res) => {
     }
 
     const embedding = await generateEmbedding(searchText);
+
     let vectorResults = [];
 
     try {
       vectorResults = await Task.aggregate([
         {
           $vectorSearch: {
-            index: 'task_semantic_search',
+            index: 'task_vector_search',
             path: 'embedding',
             queryVector: embedding,
             numCandidates: 100,
@@ -335,10 +341,12 @@ router.get('/tasks/search', protect, embeddingRateLimiter, async (req, res) => {
       vectorResults = [];
     }
 
+
     const textResults = await Task.find(buildTextTaskQuery({ q, status, location, minPrice, maxPrice, category }))
       .populate('customer', 'name')
       .sort({ createdAt: -1 })
       .limit(Number(limit));
+
 
     const combined = vectorResults.map((task) => serializeTask(task)).filter((task) => matchesTaskFilters(task, req.query));
     const existingIds = new Set(combined.map((task) => task._id.toString()));
@@ -392,7 +400,7 @@ router.get('/tasks/:taskId/similar', protect, embeddingRateLimiter, async (req, 
       similarTasks = await Task.aggregate([
         {
           $vectorSearch: {
-            index: 'task_semantic_search',
+            index: 'task_vector_search',
             path: 'embedding',
             queryVector: embedding,
             numCandidates: 100,

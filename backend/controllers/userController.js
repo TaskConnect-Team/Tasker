@@ -2,13 +2,15 @@ import User from "../models/User.js";
 import { buildGeoPointFromBody } from "../utils/geo.js";
 import { normalizeList, normalizeText } from "../utils/normalize.js";
 import { buildSafeUser } from "../utils/serializeUser.js";
+import { runProfileEmbeddingWorker } from "../workers/embeddingWorker.js";
 
 const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const updateProfile = async (req, res) => {
   try {
+
     const updates = {};
-    const name = normalizeText(req.body.fullName);
+    const name = normalizeText(req.body.name);
     const tagline = normalizeText(req.body.tagline);
     const bio = normalizeText(req.body.bio);
     const city = normalizeText(req.body.city ?? req.body.location);
@@ -29,27 +31,40 @@ export const updateProfile = async (req, res) => {
     if (typeof availability === "boolean") updates.availability = availability;
     if (services !== undefined) updates.services = services;
 
+    let needsEmbeddingUpdate = false;
+
     if (req.user.role === "tasker") {
       if (typeof hourlyRate === "number") updates.hourlyRate = hourlyRate;
-      if (skills !== undefined) updates.skills = skills;
       if (portfolio !== undefined) updates.portfolio = portfolio;
+      if (skills !== undefined) {
+        updates.skills = skills;
+        needsEmbeddingUpdate = true;
+      }
+
+      if (bio !== undefined || tagline !== undefined || city !== undefined || services !== undefined) {
+        needsEmbeddingUpdate = true;
+      }
     } else {
       if (bio !== undefined) updates.bio = bio;
       if (location !== undefined) updates.location = location;
     }
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
       runValidators: true,
     }).select("-password");
 
-    if (!user) {
+    if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (req.user.role === "tasker" && needsEmbeddingUpdate) {
+      runProfileEmbeddingWorker(req.user._id, updatedUser).catch(console.error);
     }
 
     return res.status(200).json({
       message: "Profile updated successfully",
-      user: buildSafeUser(user),
+      user: buildSafeUser(updatedUser),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -142,53 +157,64 @@ export const getPublicProfile = async (req, res) => {
 export const searchTaskers = async (req, res) => {
   try {
     const { q, skills, city, minRate, maxRate, minRating } = req.query;
+
     const query = { role: "tasker" };
 
-    if (!q.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Search query is required',
-      });
-    }
+    query.$and = [];
 
-    if (q) {
-      query.name = new RegExp(escapeRegex(q), "i");
+    if (q && q.trim()) {
+      const words = q.trim().split(/\s+/);
+      words.forEach((word) => {
+        const wordRegex = new RegExp(escapeRegex(word), "i");
+        query.$and.push({
+          $or: [
+            { name: wordRegex },
+            { tagline: wordRegex },
+            { skills: wordRegex }
+          ]
+        });
+      });
     }
 
     if (skills) {
       const skillList = normalizeList(skills);
-
       if (skillList.length) {
-        query.skills = { $in: skillList };
+        query.$and.push({ skills: { $in: skillList } });
       }
     }
 
     if (city) {
-      query.$or = [
-        { city: new RegExp(escapeRegex(city), "i") },
-        { locationLabel: new RegExp(escapeRegex(city), "i") },
-      ];
+      query.$and.push({
+        city: new RegExp(escapeRegex(city), "i")
+      });
     }
-
     if (minRate || maxRate) {
-      query.hourlyRate = {};
-      if (minRate) query.hourlyRate.$gte = Number(minRate);
-      if (maxRate) query.hourlyRate.$lte = Number(maxRate);
+      const rateQuery = {};
+      if (minRate) rateQuery.$gte = Number(minRate);
+      if (maxRate) rateQuery.$lte = Number(maxRate);
+
+      query.$and.push({ hourlyRate: rateQuery });
     }
 
     if (minRating) {
-      query.trustScore = { $gte: Number(minRating) };
+      query.$and.push({ trustScore: { $gte: Number(minRating) } });
+    }
+
+    if (query.$and.length === 0) {
+      delete query.$and;
     }
 
     const users = await User.find(query).select("-password").sort({ createdAt: -1 });
 
     return res.status(200).json({
+      success: true,
       taskers: users.map((user) => buildSafeUser(user)),
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const getNearbyTaskers = async (req, res) => {
   try {

@@ -15,4 +15,5 @@ export const buildSafeUser = (user) => ({
   availability: user.availability ?? true,
   isVerified: user.isVerified ?? false,
   trustScore: user.trustScore ?? 5.0,
+  embeddedAt: user.embeddedAt || null,
 });
