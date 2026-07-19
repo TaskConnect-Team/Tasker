@@ -193,6 +193,9 @@ function BrowseTaskersPage() {
         if (searchMode === 'ai' && hasSearchTerms) {
           try {
             const { data } = await api.get('/ai/search', { params: requestFilters });
+
+            console.log("data  : ", data)
+
             taskerResults = data?.data || [];
             setSearchSource(data?.sources?.vector ? 'vector' : 'text');
           } catch (error) {
@@ -337,7 +340,7 @@ function BrowseTaskersPage() {
                             <p className="text-xs text-slate-500">{tasker.tagline || 'Reliable pro'}</p>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                               <MapPin className="h-3 w-3" />
-                              {tasker.location || 'Remote'}
+                              {tasker.city || 'Remote'}
                             </div>
                           </div>
                         </div>

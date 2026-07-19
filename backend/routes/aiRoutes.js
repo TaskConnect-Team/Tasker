@@ -178,12 +178,13 @@ router.get('/search', protect, embeddingRateLimiter, async (req, res) => {
     // Generate embedding for search query
     const embedding = await generateEmbedding([q, skills, city].filter(Boolean).join(' '));
 
+    console.log('Search embedding generated:', embedding.length);
 
     // Perform vector search on Tasker collection using the imported User model
     const vectorResults = await User.aggregate([
       {
         $vectorSearch: {
-          index: 'task_vector_search',
+          index: 'user_vector_search',
           path: 'embedding',
           queryVector: embedding,
           numCandidates: 100,
@@ -213,7 +214,6 @@ router.get('/search', protect, embeddingRateLimiter, async (req, res) => {
       },
     ]);
 
-    console.log("vector search results : ", vectorResults.length)
 
     // Traditional text search (backup/fallback)
     const textResults = await User.find({
@@ -225,7 +225,6 @@ router.get('/search', protect, embeddingRateLimiter, async (req, res) => {
       ],
     }).limit(limit);
 
-    console.log("text search results : ", textResults.length)
 
     const combined = [...vectorResults];
     const existingIds = new Set(combined.map(r => r._id.toString()));
