@@ -208,6 +208,7 @@ function BrowseTasksPage() {
           setSearchSource('text');
         }
 
+
         if (mounted) {
           setTasks(taskResults);
         }
